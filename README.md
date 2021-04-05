@@ -65,22 +65,3 @@ See: http://dtrace.org/blogs/about/
 ## sysdig
 
 https://github.com/draios/sysdig
-
-## SPAdes
-
-See: https://anaconda.org/bioconda/spades
-
-    conda install -c bioconda/label/cf201901 spades
-
-### strace
-
-conda create --name sbr
-conda activate sbr
-strace -o strace-conda-install-spades.log conda install -c bioconda/label/cf201901 spades
-conda deactivate
-conda remove --name sbr --all
-
-### dtrace
-
-### sysdig
-
