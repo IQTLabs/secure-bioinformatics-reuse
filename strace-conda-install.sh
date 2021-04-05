@@ -75,6 +75,7 @@ rm -f ${base_name}.log
 strace -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
+conda clean -y --all
 
 # List unique command short descriptions
 commands=$(cat ${base_name}.log | cut -d "(" -f 1 | grep -v "+++" | grep -v -- "---" | sort | uniq)
@@ -93,6 +94,7 @@ rm -f ${base_name}.log
 strace -f -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
+conda clean -y --all
 
 # Conda install tracing child processes as they are created by
 # currently traced processes as a result of the fork(2), vfork(2) and
@@ -104,6 +106,7 @@ rm -f ${base_name}.log
 strace -ff -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
+conda clean -y --all
 
 # Teardown
 popd
