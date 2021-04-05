@@ -4,11 +4,18 @@
     sudo snap install emacs --classic
 
 ## Conda
+
+See: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html
+
     diff Miniconda3-latest-Linux-x86_64.sh.sha256sum.actual Miniconda3-latest-Linux-x86_64.sh.sha256sum.expected
     bash Miniconda3-latest-Linux-x86_64.sh
     conda config --set auto_activate_base false
 
 ## Docker
+
+See: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html, and
+https://docs.docker.com/engine/install/linux-postinstall/
+
     sudo apt-get update
     sudo apt-get install \
          apt-transport-https \
@@ -32,7 +39,48 @@
     sudo systemctl enable containerd.service
 
 ## DTrace
+
+See: http://dtrace.org/blogs/about/
+
     sudo apt install systemtap-sdt-dev
 
 ## Sysdig
     sudo apt install sysdig
+
+# Testing notes
+
+## conda
+
+See: https://conda.io/projects/conda/en/latest/index.html
+See: https://conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html
+
+## strace
+
+See: https://man7.org/linux/man-pages/man1/strace.1.html
+
+## dtrace
+
+See: http://dtrace.org/blogs/about/
+
+## sysdig
+
+https://github.com/draios/sysdig
+
+## SPAdes
+
+See: https://anaconda.org/bioconda/spades
+
+    conda install -c bioconda/label/cf201901 spades
+
+### strace
+
+conda create --name sbr
+conda activate sbr
+strace -o strace-conda-install-spades.log conda install -c bioconda/label/cf201901 spades
+conda deactivate
+conda remove --name sbr --all
+
+### dtrace
+
+### sysdig
+
