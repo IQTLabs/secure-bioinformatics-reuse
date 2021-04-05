@@ -1,6 +1,6 @@
 # Run using "bash -i"
 
-# Print usage.
+# Print usage
 usage() {
     cat << EOF
 
@@ -28,13 +28,17 @@ EOF
 # Parse command line options
 channel="bioconda"
 suffix=""
-while getopts ":c:s:h" opt; do
+do_clean=0
+while getopts ":c:s:Ch" opt; do
     case $opt in
 	c)
 	    channel="${OPTARG}"
 	    ;;
 	s)
 	    suffix="-${OPTARG}"
+	    ;;
+	C)
+	    do_clean=1
 	    ;;
 	h)
 	    usage
@@ -54,11 +58,12 @@ while getopts ":c:s:h" opt; do
 done
 
 # Parse command line arguments
-shift `expr $OPTIND - 1`
+shift `expr ${OPTIND} - 1`
 if [ "$#" -ne 1 ]; then
-    echo "Only one argument required. Additional arguments ignored."
+    echo "Only one argument required."
+    exit 1
 fi
-package=$1
+package="${1}"
 
 # Setup
 set -xe
@@ -75,10 +80,12 @@ rm -f ${base_name}.log
 strace -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
-conda clean -y --all
+if [ ${do_clean} == 1 ]; then
+    conda clean -y --all
+fi
 
 # List unique command short descriptions
-commands=$(cat ${base_name}.log | cut -d "(" -f 1 | grep -v "+++" | grep -v -- "---" | sort | uniq)
+commands="$(cat ${base_name}.log | cut -d "(" -f 1 | grep -v "+++" | grep -v -- "---" | sort | uniq)"
 rm -f ${base_name}.cmd
 for command in $commands; do
     man -f $command >> ${base_name}.cmd
@@ -94,7 +101,9 @@ rm -f ${base_name}.log
 strace -f -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
-conda clean -y --all
+if [ ${do_clean} == 1 ]; then
+    conda clean -y --all
+fi
 
 # Conda install tracing child processes as they are created by
 # currently traced processes as a result of the fork(2), vfork(2) and
@@ -106,7 +115,9 @@ rm -f ${base_name}.log
 strace -ff -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
 conda remove -y --name sbr --all
-conda clean -y --all
+if [ ${do_clean} == 1 ]; then
+    conda clean -y --all
+fi
 
 # Teardown
 popd
