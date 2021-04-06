@@ -39,9 +39,6 @@ https://docs.docker.com/engine/install/linux-postinstall/
     sudo systemctl enable containerd.service
 
 ## DTrace
-
-See: http://dtrace.org/blogs/about/
-
     sudo apt install systemtap-sdt-dev
 
 ## Sysdig
