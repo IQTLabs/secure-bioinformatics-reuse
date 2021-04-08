@@ -1,5 +1,9 @@
 # Installation notes
 
+## Ubuntu
+
+Initially used Ubuntu 20.04 LTS. May need Ubuntu 18.04 LTS for Conda build.
+
 ## Emacs
     sudo snap install emacs --classic
 
@@ -19,10 +23,10 @@ https://docs.docker.com/engine/install/linux-postinstall/
     sudo apt-get update
     sudo apt-get install \
          apt-transport-https \
-	 ca-certificates \
-	 curl \
-	 gnupg \
-	 lsb-release
+         ca-certificates \
+         curl \
+         gnupg \
+         lsb-release
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
         | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
     echo \
