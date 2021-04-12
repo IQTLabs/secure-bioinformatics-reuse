@@ -2,7 +2,7 @@
 
 ## Ubuntu
 
-Initially used Ubuntu 20.04 LTS. May need Ubuntu 18.04 LTS for Conda build.
+Installed Ubuntu 20.04 LTS.
 
 ## Emacs
 
@@ -67,14 +67,14 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
 1. Create a Branch
 
-    # Make sure our master is up to date with Bioconda
-    git checkout master
-    git pull upstream master
-    git push origin master
+        # Make sure our master is up to date with Bioconda
+        git checkout master
+        git pull upstream master
+        git push origin master
 
-    # Create and checkout a new branch for our work
-    git checkout -b ralatsdc/recipe-for-apc
-    git push -u origin ralatsdc/recipe-for-apc
+        # Create and checkout a new branch for our work
+        git checkout -b ralatsdc/recipe-for-apc
+        git push -u origin ralatsdc/recipe-for-apc
 
 1. Make Some Edits
 
