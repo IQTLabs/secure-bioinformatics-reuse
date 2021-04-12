@@ -57,13 +57,13 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
 1. Create a Fork of our Recipes Repo
 
-    git@github.com:IQTLabs/bioconda-recipes.git
+        git@github.com:IQTLabs/bioconda-recipes.git
 
 1. Create Local “Clone”
 
-    git clone git@github.com:IQTLabs/bioconda-recipes.git
-    cd bioconda-recipes
-    git remote add upstream https://github.com/bioconda/bioconda-recipes.git
+        git clone git@github.com:IQTLabs/bioconda-recipes.git
+        cd bioconda-recipes
+        git remote add upstream https://github.com/bioconda/bioconda-recipes.git
 
 1. Create a Branch
 
