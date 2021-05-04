@@ -102,6 +102,25 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
         conda install -c file://$PWD/conda-bld your-package
 
+    For the apc package, for example, after modifying any of the files
+    in recipes/apc, run these commands:
+
+        conda activate apc
+        cd ~/bioconda_recipes
+        mkdir -p conda-bld
+
+        conda remove apc
+        conda clean --all
+        sudo rm -rf conda-bld/*
+        circleci build --volume $PWD/conda-bld:/opt/conda/conda-bld
+        conda install -c file://$PWD/conda-bld apc
+
+    Note that a hash, preferrably sha256, is required to verify the
+    integrity of the source package. Generate the hash using, for
+    example:
+
+        wget -O- https://github.com/ralatsdc/apc/archive/refs/tags/v0.1.2.tar.gz | shasum -a 256
+
 ## Build and test a recipe remotely
 
 1. Push Changes
