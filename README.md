@@ -65,6 +65,16 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
     sudo apt install sysdig
 
+## Python
+
+    sudo apt-get install python3-venv
+    pip install -r requirements.txt
+
+## AWS
+
+    sudo apt install awscli
+    aws configure
+
 # Contributing to Bioconda
 
 ## Build and test a recipe locally
