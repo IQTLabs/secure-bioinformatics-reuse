@@ -46,7 +46,7 @@ while getopts ":d:c:h" opt; do
 	    exit 1
 	    ;;
 	\:)
-	    echo "Option -${OPTARG} requires an argument." >&2
+	    echo "Option -${OPTARG} requires an argument" >&2
 	    usage
 	    exit 1
 	    ;;

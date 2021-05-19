@@ -50,7 +50,7 @@ while getopts ":c:s:Ch" opt; do
 	    exit 1
 	    ;;
 	\:)
-	    echo "Option -${OPTARG} requires an argument." >&2
+	    echo "Option -${OPTARG} requires an argument" >&2
 	    usage
 	    exit 1
 	    ;;
@@ -60,7 +60,7 @@ done
 # Parse command line arguments
 shift `expr ${OPTIND} - 1`
 if [ "$#" -ne 1 ]; then
-    echo "Only one argument required."
+    echo "Only one argument required"
     exit 1
 fi
 package="${1}"

@@ -45,7 +45,7 @@ while getopts ":s:Ch" opt; do
 	    exit 1
 	    ;;
 	\:)
-	    echo "Option -${OPTARG} requires an argument." >&2
+	    echo "Option -${OPTARG} requires an argument" >&2
 	    usage
 	    exit 1
 	    ;;
@@ -55,7 +55,7 @@ done
 # Parse command line arguments
 shift `expr ${OPTIND} - 1`
 if [ "$#" -ne 2 ]; then
-    echo "Two arguments required."
+    echo "Two arguments required"
     exit 1
 fi
 build_directory="${1}"

@@ -11,7 +11,8 @@ SYNOPSIS
     aura-scan path-to-python-file path-to-scan-home
 
 DESCRIPTION
-    Uses Aura to scan a python file and produce JSON output.
+    Uses Aura to scan a python file and produce JSON output in the
+    scan home directory.
 
 OPTIONS 
     None
@@ -32,7 +33,7 @@ while getopts ":h" opt; do
 	    exit 1
 	    ;;
 	\:)
-	    echo "Option -${OPTARG} requires an argument." >&2
+	    echo "Option -${OPTARG} requires an argument" >&2
 	    usage
 	    exit 1
 	    ;;
@@ -42,7 +43,7 @@ done
 # Parse command line arguments
 shift `expr ${OPTIND} - 1`
 if [ "$#" -ne 2 ]; then
-    echo "Two arguments required."
+    echo "Two arguments required"
     exit 1
 fi
 file_home=$(dirname "${1}")
