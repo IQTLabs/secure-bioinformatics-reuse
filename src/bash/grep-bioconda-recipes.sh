@@ -65,7 +65,7 @@ set -e
 
 # Find and search recipes in background subshells
 for command in ${COMMANDS}; do
-    $(find ${BIOCONDA_RECIPES_DIR} -name "build.sh" \
+    $(find ${BIOCONDA_RECIPES_DIR} -name "*.sh" \
 	   -exec grep -Hn ${command} {} \; \
 	  | tee grep-bioconda-recipes-${command}.log \
 		> /dev/null) &
