@@ -7,10 +7,10 @@ class DaskPool:
     def __init__(
         self,
         region_name="us-east-1",
-        image_id="ami-0c753a2f9c97b67a5",
+        image_id="ami-0dc8ed438643bfda3",
         target_count=3,
-        key_name="dask-0.1.0",
-        security_groups=["dask-0.1.0"],
+        key_name="dask-01",
+        security_groups=["dask-01"],
         instance_type="t2.micro",
         max_sleep=60,
         **kwargs
@@ -71,7 +71,9 @@ class DaskPool:
         reservations = self.connection.get_all_reservations()
         for r in reservations:
             for i in r.instances:
-                if i.image_id == self.image_id and i.state == "running":
+                if (i.image_id == self.image_id
+                    and i.instance_type == self.instance_type
+                    and i.state == "running"):
                     instances.append(i)
         return instances
 
