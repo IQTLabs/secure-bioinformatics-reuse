@@ -72,12 +72,17 @@ pushd ${build_directory}
 # Docker build
 base_name="strace-conda-install-${package}${suffix}"
 rm -f ${base_name}.log
-docker images | tr -s " " | sort > original_images.txt
+docker images \
+    | tr -s " " \
+    | sort > original_images.txt
 strace -o ${base_name}.log docker build --tag ${package} .
 if [ ${do_clean} == 1 ]; then
-    docker images | tr -s " " | sort > current_images.txt
+    docker images \
+	| tr -s " " \
+	| sort > current_images.txt
     images=$(comm -13 original_images.txt current_images.txt \
-		 | cut -d " " -f 1-2 | tr " " ":")
+		 | cut -d " " -f 1-2 \
+		 | tr " " ":")
     for image in ${images}; do
 	docker rmi ${image}
     done
@@ -85,8 +90,12 @@ if [ ${do_clean} == 1 ]; then
 fi
 
 # List unique command short descriptions
-commands=$(cat ${base_name}.log | cut -d "(" -f 1 \
-	       | grep -v "+++" | grep -v -- "---" | sort | uniq)
+commands=$(cat ${base_name}.log \
+	       | cut -d "(" -f 1 \
+	       | grep -v "+++" \
+	       | grep -v -- "---" \
+	       | sort \
+	       | uniq)
 rm -f ${base_name}.cmd
 for command in $commands; do
     man -f $command >> ${base_name}.cmd

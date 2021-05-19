@@ -54,7 +54,8 @@ scan_home="${2}"
 set -xe
 
 # Scan a python file and produce JSON output
-scan_name=$(echo "${file_name}" | sed s/.py/.json/)
+scan_name=$(echo "${file_name}" \
+		| sed s/.py/.json/)
 docker run \
        -v ${file_home}:/home \
        --rm sourcecodeai/aura:dev scan \

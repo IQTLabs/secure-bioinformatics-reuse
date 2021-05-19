@@ -85,7 +85,12 @@ if [ ${do_clean} == 1 ]; then
 fi
 
 # List unique command short descriptions
-commands="$(cat ${base_name}.log | cut -d "(" -f 1 | grep -v "+++" | grep -v -- "---" | sort | uniq)"
+commands="$(cat ${base_name}.log \
+		| cut -d "(" -f 1 \
+		| grep -v "+++" \
+		| grep -v -- "---" \
+		| sort \
+		| uniq)"
 rm -f ${base_name}.cmd
 for command in $commands; do
     man -f $command >> ${base_name}.cmd
