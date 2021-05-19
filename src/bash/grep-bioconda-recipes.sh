@@ -19,22 +19,22 @@ DESCRIPTION
 
 OPTIONS 
     -d    The bioconda-recipes directory
-    -c    A space separated list of commands, default: "ssh sftp scp
-          wget curl"
+    -c    A space separated list of commands, default:
+              "ssh sftp scp wget curl"
 
 EOF
 }
 
 # Parse command line options
-BIOCONDA_RECIPES_DIR="/home/ubuntu/bioconda-recipes"
-COMMANDS="ssh sftp scp wget curl"
+bioconda_recipes_dir="/home/ubuntu/bioconda-recipes"
+commands="ssh sftp scp wget curl"
 while getopts ":d:c:h" opt; do
     case $opt in
 	d)
-	    BIOCONDA_RECIPES_DIR="${OPTARG}"
+	    bioconda_recipes_dir="${OPTARG}"
 	    ;;
 	c)
-	    COMMANDS="-${OPTARG}"
+	    commands="-${OPTARG}"
 	    ;;
 	h)
 	    usage
@@ -64,8 +64,8 @@ fi
 set -e
 
 # Find and search recipes in background subshells
-for command in ${COMMANDS}; do
-    $(find ${BIOCONDA_RECIPES_DIR} -name "*.sh" \
+for command in ${commands}; do
+    $(find ${bioconda_recipes_dir} -name "*.sh" \
 	   -exec grep -Hn ${command} {} \; \
 	  | tee grep-bioconda-recipes-${command}.log \
 		> /dev/null) &

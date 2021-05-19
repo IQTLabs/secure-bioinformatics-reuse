@@ -19,22 +19,22 @@ DESCRIPTION
 
 OPTIONS 
     -d    The containers directory
-    -c    A space separated list of commands, default: "ssh sftp scp
-          wget curl"
+    -c    A space separated list of commands, default:
+              "ssh sftp scp wget curl"
 
 EOF
 }
 
 # Parse command line options
-CONTAINERS_DIR="/home/ubuntu/containers"
-COMMANDS="ssh sftp scp wget curl"
+containers_dir="/home/ubuntu/containers"
+commands="ssh sftp scp wget curl"
 while getopts ":d:c:h" opt; do
     case $opt in
 	d)
-	    CONTAINERS_DIR="${OPTARG}"
+	    containers_dir="${OPTARG}"
 	    ;;
 	c)
-	    COMMANDS="-${OPTARG}"
+	    commands="-${OPTARG}"
 	    ;;
 	h)
 	    usage
@@ -64,8 +64,8 @@ fi
 set -e
 
 # Find and search recipes in background subshells
-for command in ${COMMANDS}; do
-    $(find ${CONTAINERS_DIR} -name "Dockerfile" \
+for command in ${commands}; do
+    $(find ${containers_dir} -name "Dockerfile" \
 	   -exec grep -Hn ${command} {} \; \
 	  | tee grep-containers-${command}.log \
 		> /dev/null) &
