@@ -43,6 +43,20 @@ https://docs.docker.com/engine/install/linux-postinstall/
     sudo systemctl enable docker.service
     sudo systemctl enable containerd.service
 
+## Nextflow
+
+    curl -s https://get.nextflow.io | bash
+
+## nf-core
+
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+
+    conda create --name nf-core python=3.7 nf-core nextflow
+    conda activate nf-core
+    nf-core list --json
+
 ## DTrace
 
     sudo apt install systemtap-sdt-dev
@@ -51,7 +65,17 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
     sudo apt install sysdig
 
-# Contributing to Conda
+## Python
+
+    sudo apt-get install python3-venv
+    pip install -r requirements.txt
+
+## AWS
+
+    sudo apt install awscli
+    aws configure
+
+# Contributing to Bioconda
 
 ## Build and test a recipe locally
 
