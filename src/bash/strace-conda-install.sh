@@ -50,7 +50,7 @@ while getopts ":c:s:Ch" opt; do
 	    exit 1
 	    ;;
 	\:)
-	    echo "Option -${OPTARG} requires an argument." >&2
+	    echo "Option -${OPTARG} requires an argument" >&2
 	    usage
 	    exit 1
 	    ;;
@@ -60,7 +60,7 @@ done
 # Parse command line arguments
 shift `expr ${OPTIND} - 1`
 if [ "$#" -ne 1 ]; then
-    echo "Only one argument required."
+    echo "Only one argument required"
     exit 1
 fi
 package="${1}"
@@ -85,7 +85,12 @@ if [ ${do_clean} == 1 ]; then
 fi
 
 # List unique command short descriptions
-commands="$(cat ${base_name}.log | cut -d "(" -f 1 | grep -v "+++" | grep -v -- "---" | sort | uniq)"
+commands="$(cat ${base_name}.log \
+		| cut -d "(" -f 1 \
+		| grep -v "+++" \
+		| grep -v -- "---" \
+		| sort \
+		| uniq)"
 rm -f ${base_name}.cmd
 for command in $commands; do
     man -f $command >> ${base_name}.cmd
