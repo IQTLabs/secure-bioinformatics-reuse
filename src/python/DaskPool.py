@@ -85,8 +85,8 @@ class DaskPool:
         commands = " ; ".join(
             [
                 "cd secure-bioinformatics-reuse",
-                "git checkout " + self.branch,
                 "git stash",
+                "git checkout " + self.branch,
                 "git pull",
             ]
         )
