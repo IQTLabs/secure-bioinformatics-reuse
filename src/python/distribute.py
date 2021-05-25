@@ -1,12 +1,29 @@
+import logging
 import os
 import subprocess
 
 from dask.distributed import Client, SSHCluster
 
+from DaskPool import DaskPool
+
+
 RECIPES_DIR="/home/ubuntu/bioconda-recipes"
 CONTAINERS_DIR="/home/ubuntu/containers"
+SCRIPTS_DIR="/home/ubuntu/secure-bioinformatics-reuse/src/bash"
 
-from DaskPool import DaskPool
+
+root = logging.getLogger()
+root.setLevel(logging.INFO)
+
+ch = logging.StreamHandler()
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+root.addHandler(ch)
+
+logging.getLogger("asyncssh").setLevel(logging.WARNING)
+logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
+
+logger = logging.getLogger(__name__)
 
 
 def list_dockerfiles():
@@ -29,27 +46,17 @@ def list_recipes():
     return sorted(os.listdir(RECIPES_DIR + "/recipes"))
 
 
-def strace_docker_build():
-    """
-    subprocess.Popen(
-        "cd ; date > date.log",
-        shell=True,
-        stdin=None,
-        stdout=None,
-        stderr=None,
-        close_fds=True,
-    )
-    """
-    return subprocess.run(
+def strace_docker_build(package, version):
+    completed_process = subprocess.run(
         [
-            "/home/ubuntu/secure-bioinformatics-reuse/src/bash/strace-docker-build.sh",
-            "/home/ubuntu/containers/spectra-cluster-cli/v1.1.2",
-            "spectra-cluster-cli",
-            "v1.1.2",
+            os.path.join(SCRIPTS_DIR, "strace-docker-build.sh"),
+            os.path.join(CONTAINERS_DIR, package, version),
+            package,
+            version,
         ],
         capture_output=True
     )
-
+    return completed_process.returncode
 
 def inc(x):
     return x + 1
@@ -61,12 +68,18 @@ def add(x, y):
 
 def run(cmd):
     return subprocess.run("date", capture_output=True)
-    # return subprocess.Popen(cmd, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
 
 
-def test_dask_cluster():
+def test_one():
     daskPool = DaskPool()
     # daskPool.restart_pool()
+    daskPool.maintain_pool()
+    daskPool.checkout_branch()
+    daskPool.checkout_branch()
+    
+
+def test_two():
+    daskPool = DaskPool()
     daskPool.maintain_pool()
     daskPool.checkout_branch()
     cluster = SSHCluster(
@@ -81,13 +94,14 @@ def test_dask_cluster():
     c = client.submit(add, a, b)
     print(c.result())
     d = client.submit(run, "date")
-    print(d.result())
-    e = client.submit(strace_docker_build)
+    print(d.result().stdout)
+    e = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2")
     print(e.result())
 
 
 if __name__ == "__main__":
+
     # dirpaths, packages, versions = list_dockerfiles()
     # recipes = list_recipes()
-    test_dask_cluster()
     # result = strace_docker_build()
+    test_two()
