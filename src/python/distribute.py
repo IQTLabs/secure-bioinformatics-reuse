@@ -1,5 +1,7 @@
+import json
 import logging
 import os
+from pathlib import PurePath
 import subprocess
 
 from dask.distributed import Client, SSHCluster
@@ -7,10 +9,11 @@ from dask.distributed import Client, SSHCluster
 from DaskPool import DaskPool
 
 
+KEY_DIR="~/.ssh"
+SHELL_CMD="/usr/bin/bash"
+SCRIPTS_DIR="/home/ubuntu/secure-bioinformatics-reuse/src/bash"
 RECIPES_DIR="/home/ubuntu/bioconda-recipes"
 CONTAINERS_DIR="/home/ubuntu/containers"
-SCRIPTS_DIR="/home/ubuntu/secure-bioinformatics-reuse/src/bash"
-
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -24,6 +27,48 @@ logging.getLogger("asyncssh").setLevel(logging.WARNING)
 logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
+
+
+def list_repositories():
+    loc_path = PurePath(
+        os.path.realpath(__file__)
+    ).parents[2].joinpath("dat", "loc.json")
+    with open(loc_path, "r") as loc_fp:
+        loc = json.load(loc_fp)
+    repositories = []
+    for d in loc:
+        if list(d)[1] == "Python":
+            repositories.append(d["git_url"])
+    return repositories
+
+    
+def aura_scan(python_file, scan_home):
+    completed_process = subprocess.run(
+        [
+            os.path.join(SCRIPTS_DIR, "aura-scan.sh"),
+            python_file,
+            scan_home,
+        ],
+        capture_output=True,
+    )
+    return completed_process
+
+
+def list_recipes():
+    return sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes")))
+
+
+def strace_conda_install(package):
+    completed_process = subprocess.run(
+        [
+            SHELL_CMD,
+            "-i",
+            os.path.join(SCRIPTS_DIR, "strace-conda-install.sh"),
+            package,
+        ],
+        capture_output=True,
+    )
+    return completed_process
 
 
 def list_dockerfiles():
@@ -42,10 +87,6 @@ def list_dockerfiles():
     return dirpaths, packages, versions
 
 
-def list_recipes():
-    return sorted(os.listdir(RECIPES_DIR + "/recipes"))
-
-
 def strace_docker_build(package, version):
     completed_process = subprocess.run(
         [
@@ -54,54 +95,70 @@ def strace_docker_build(package, version):
             package,
             version,
         ],
-        capture_output=True
+        capture_output=True,
     )
-    return completed_process.returncode
-
-def inc(x):
-    return x + 1
+    return completed_process
 
 
-def add(x, y):
-    return x + y
+def list_pipelines():
+    completed_process = subprocess.run(
+        [
+            SHELL_CMD,
+            "-i",
+            os.path.join(SCRIPTS_DIR, "list-pipelines.sh"),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    pipelines = completed_process.stdout.split("\n")
+    pipelines.remove("")
+    return pipelines
 
-
-def run(cmd):
-    return subprocess.run("date", capture_output=True)
-
-
-def test_one():
-    daskPool = DaskPool()
-    # daskPool.restart_pool()
-    daskPool.maintain_pool()
-    daskPool.checkout_branch()
-    daskPool.checkout_branch()
     
+def strace_pipeline_run(pipeline):
+    completed_process = subprocess.run(
+        [
+            SHELL_CMD,
+            "-i",
+            os.path.join(SCRIPTS_DIR, "strace-pipeline-run.sh"),
+            pipeline,
+        ],
+        capture_output=True,
+    )
+    return completed_process
 
-def test_two():
+
+def test_distributed_strace():
     daskPool = DaskPool()
     daskPool.maintain_pool()
     daskPool.checkout_branch()
     cluster = SSHCluster(
         [i.ip_address for i in daskPool.instances],
-        connect_options={"known_hosts": None, "client_keys": ['~/.ssh/dask-01.pem']},
+        connect_options={"known_hosts": None, "client_keys": [os.path.join(KEY_DIR, 'dask-01.pem')]},
         worker_options={"nthreads": 2},
         scheduler_options={"port": 0, "dashboard_address": ":8797"}
     )
     client = Client(cluster)
-    a = client.submit(inc, 1)
-    b = client.submit(inc, 2)
-    c = client.submit(add, a, b)
-    print(c.result())
-    d = client.submit(run, "date")
-    print(d.result().stdout)
-    e = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2")
-    print(e.result())
+    sci = client.submit(strace_conda_install, "velvet")
+    print(sci.result())
+    sdb = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2")
+    print(sdb.result())
+    spr = client.submit(strace_pipeline_run, "rnaseq")
+    print(spr.result())
 
 
 if __name__ == "__main__":
 
-    # dirpaths, packages, versions = list_dockerfiles()
-    # recipes = list_recipes()
-    # result = strace_docker_build()
-    test_two()
+    repositories = list_repositories()
+    print(repositories)
+
+    recipes = list_recipes()
+    print(recipes)
+
+    dirpaths, packages, versions = list_dockerfiles()
+    print(packages)
+
+    pipelines = list_pipelines()
+    print(pipelines)
+
+    test_distributed_strace()
