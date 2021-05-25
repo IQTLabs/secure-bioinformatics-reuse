@@ -33,6 +33,12 @@ class DaskPoolTestCase(unittest.TestCase):
         self.daskPool.maintain_pool()
         self.assertEqual(len(self.daskPool.instances), self.daskPool.target_count)
 
+    def test_terminate_pool(self):
+        self.daskPool.maintain_pool()
+
+        self.daskPool.terminate_pool()
+        self.assertEqual(len(self.daskPool.instances), 0)
+
     def test_restart_pool(self):
         self.daskPool.maintain_pool()
 
@@ -41,11 +47,7 @@ class DaskPoolTestCase(unittest.TestCase):
         ip_b = set([i.ip_address for i in self.daskPool.instances])
         self.assertEqual(len(ip_a.intersection(ip_b)), 0)
 
-    def test_terminate_pool(self):
-        self.daskPool.maintain_pool()
-
-        self.daskPool.terminate_pool()
-        self.assertEqual(len(self.daskPool.instances), 0)
+    # TODO: def test_checkout_branch(self):
 
     def tearDown(self):
         self.daskPool.terminate_pool()
