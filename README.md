@@ -52,8 +52,8 @@ https://docs.docker.com/engine/install/linux-postinstall/
     conda config --add channels defaults
     conda config --add channels bioconda
     conda config --add channels conda-forge
-
     conda create --name nf-core python=3.7 nf-core nextflow
+
     conda activate nf-core
     nf-core list --json
 
