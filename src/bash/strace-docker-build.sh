@@ -8,14 +8,14 @@ NAME
     strace-docker-build - trace a docker build
 
 SYNOPSIS
-    strace-docker-build [-s suffix] build-directory package
+    strace-docker-build [-s suffix] build-directory package version
 
 DESCRIPTION
     Uses strace to trace the build of the docker file in the build
-    directory.
+    directory with tag "package-version".
 
     A directory is created to contain all output files, and each uses
-    a base name give by "strace-docker-build-${package}-${suffix}.
+    a base name give by "strace-docker-build-${package}-%{version}${suffix}".
 
 OPTIONS 
     -s    The suffix of the base name for the output directory and
@@ -54,28 +54,29 @@ done
 
 # Parse command line arguments
 shift `expr ${OPTIND} - 1`
-if [ "$#" -ne 2 ]; then
-    echo "Two arguments required"
+if [ "$#" -ne 3 ]; then
+    echo "Three arguments required"
     exit 1
 fi
 build_directory="${1}"
 package="${2}"
+version="${3}"
 
 # Setup
 set -xe
-base_name="strace-docker-build-${package}${suffix}"
+base_name="strace-docker-build-${package}-$version${suffix}"
 rm -rf ${base_name}
 mkdir ${base_name}
 output_directory="${PWD}/${base_name}"
 pushd ${build_directory}
 
 # Docker build
-base_name="strace-conda-install-${package}${suffix}"
+base_name="strace-docker-build-${package}-${version}${suffix}"
 rm -f ${base_name}.log
 docker images \
     | tr -s " " \
     | sort > original_images.txt
-strace -o ${base_name}.log docker build --tag ${package} .
+strace -o ${base_name}.log docker build --tag ${package}-${version} .
 if [ ${do_clean} == 1 ]; then
     docker images \
 	| tr -s " " \
