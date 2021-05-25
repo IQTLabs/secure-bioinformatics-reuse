@@ -70,16 +70,16 @@ class DaskPool:
         self.connection.stop_instances(instance_ids)
         self._wait_for_pool(len(self.instances) - count)
 
-    def restart_pool(self):
-        self.terminate_pool()
-        self.maintain_pool()
-
     def terminate_pool(self):
         self.instances = self._get_instances()
         for i in self.instances:
             logger.info("Terminating instance: {0}".format(i.id))
             i.terminate()
         self._wait_for_pool(0)
+
+    def restart_pool(self):
+        self.terminate_pool()
+        self.maintain_pool()
 
     def checkout_branch(self):
         commands = " ; ".join(
