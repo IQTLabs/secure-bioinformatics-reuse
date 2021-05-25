@@ -1,3 +1,4 @@
+import logging
 import paramiko
 import time
 
@@ -6,6 +7,9 @@ import boto.ec2
 
 USERNAME = "ubuntu"
 KEY_FILENAME = "/home/ubuntu/.ssh/sbr-01.pem"
+
+
+logger = logging.getLogger(__name__)
 
 
 class DaskPool:
@@ -35,6 +39,7 @@ class DaskPool:
     def maintain_pool(self):
         self.instances = self._get_instances()
         current_count = len(self.instances)
+        logger.info("Current count: {0}".format(current_count))
         if current_count < self.target_count:
             self.add_to_pool(self.target_count - current_count)
         elif current_count > self.target_count:
@@ -42,6 +47,7 @@ class DaskPool:
         self._wait_for_pool(self.target_count)
 
     def add_to_pool(self, count):
+        logger.info("Add count: {0}".format(count))
         self.instances = self._get_instances()
         self.connection.run_instances(
             self.image_id,
@@ -54,6 +60,7 @@ class DaskPool:
         self._wait_for_pool(len(self.instances) + count)
 
     def remove_from_pool(self, count):
+        logger.info("Remove count: {0}".format(count))
         self.instances = self._get_instances()
         instance_ids = []
         for i in self.instances:
@@ -70,6 +77,7 @@ class DaskPool:
     def terminate_pool(self):
         self.instances = self._get_instances()
         for i in self.instances:
+            logger.info("Terminating instance: {0}".format(i.id))
             i.terminate()
         self._wait_for_pool(0)
 
@@ -86,7 +94,7 @@ class DaskPool:
         client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
         # client.load_system_host_keys()
         for i in self.instances:
-            print(i.ip_address)
+            logger.info("Updating instance: {0}".format(i.id))
             client.connect(
                 i.ip_address,
                 username=USERNAME,
@@ -99,7 +107,7 @@ class DaskPool:
             if exit_code != 0:
                 raise Exception(stderr)
             else:
-                print(stdout)
+                logger.debug(stdout)
             client.close()
 
     def _get_instances(self):
