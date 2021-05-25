@@ -9,17 +9,17 @@ from dask.distributed import Client, SSHCluster
 from DaskPool import DaskPool
 
 
-KEY_DIR="~/.ssh"
-SHELL_CMD="/usr/bin/bash"
-SCRIPTS_DIR="/home/ubuntu/secure-bioinformatics-reuse/src/bash"
-RECIPES_DIR="/home/ubuntu/bioconda-recipes"
-CONTAINERS_DIR="/home/ubuntu/containers"
+KEY_DIR = "~/.ssh"
+SHELL_CMD = "/usr/bin/bash"
+SCRIPTS_DIR = "/home/ubuntu/secure-bioinformatics-reuse/src/bash"
+RECIPES_DIR = "/home/ubuntu/bioconda-recipes"
+CONTAINERS_DIR = "/home/ubuntu/containers"
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 
 ch = logging.StreamHandler()
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 ch.setFormatter(formatter)
 root.addHandler(ch)
 
@@ -30,9 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 def list_repositories():
-    loc_path = PurePath(
-        os.path.realpath(__file__)
-    ).parents[2].joinpath("dat", "loc.json")
+    loc_path = (
+        PurePath(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
+    )
     with open(loc_path, "r") as loc_fp:
         loc = json.load(loc_fp)
     repositories = []
@@ -41,14 +41,10 @@ def list_repositories():
             repositories.append(d["git_url"])
     return repositories
 
-    
+
 def aura_scan(python_file, scan_home):
     completed_process = subprocess.run(
-        [
-            os.path.join(SCRIPTS_DIR, "aura-scan.sh"),
-            python_file,
-            scan_home,
-        ],
+        [os.path.join(SCRIPTS_DIR, "aura-scan.sh"), python_file, scan_home,],
         capture_output=True,
     )
     return completed_process
@@ -102,11 +98,7 @@ def strace_docker_build(package, version):
 
 def list_pipelines():
     completed_process = subprocess.run(
-        [
-            SHELL_CMD,
-            "-i",
-            os.path.join(SCRIPTS_DIR, "list-pipelines.sh"),
-        ],
+        [SHELL_CMD, "-i", os.path.join(SCRIPTS_DIR, "list-pipelines.sh"),],
         capture_output=True,
         text=True,
     )
@@ -114,7 +106,7 @@ def list_pipelines():
     pipelines.remove("")
     return pipelines
 
-    
+
 def strace_pipeline_run(pipeline):
     completed_process = subprocess.run(
         [
@@ -134,9 +126,12 @@ def test_distributed_strace():
     daskPool.checkout_branch()
     cluster = SSHCluster(
         [i.ip_address for i in daskPool.instances],
-        connect_options={"known_hosts": None, "client_keys": [os.path.join(KEY_DIR, 'dask-01.pem')]},
+        connect_options={
+            "known_hosts": None,
+            "client_keys": [os.path.join(KEY_DIR, "dask-01.pem")],
+        },
         worker_options={"nthreads": 2},
-        scheduler_options={"port": 0, "dashboard_address": ":8797"}
+        scheduler_options={"port": 0, "dashboard_address": ":8797"},
     )
     client = Client(cluster)
     sci = client.submit(strace_conda_install, "velvet")

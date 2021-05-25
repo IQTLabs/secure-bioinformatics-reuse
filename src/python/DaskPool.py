@@ -14,16 +14,16 @@ logger = logging.getLogger(__name__)
 
 class DaskPool:
     def __init__(
-            self,
-            region_name="us-east-1",
-            image_id="ami-0dc8ed438643bfda3",
-            target_count=3,
-            key_name="dask-01",
-            security_groups=["dask-01"],
-            instance_type="t2.micro",
-            max_sleep=60,
-            branch="rl/distributed-script-processing",
-            **kwargs
+        self,
+        region_name="us-east-1",
+        image_id="ami-0dc8ed438643bfda3",
+        target_count=3,
+        key_name="dask-01",
+        security_groups=["dask-01"],
+        instance_type="t2.micro",
+        max_sleep=60,
+        branch="rl/distributed-script-processing",
+        **kwargs
     ):
         self.region_name = region_name
         self.image_id = image_id
@@ -96,9 +96,7 @@ class DaskPool:
         for i in self.instances:
             logger.info("Updating instance: {0}".format(i.id))
             client.connect(
-                i.ip_address,
-                username=USERNAME,
-                key_filename=KEY_FILENAME,
+                i.ip_address, username=USERNAME, key_filename=KEY_FILENAME,
             )
             f_stdin, f_stdout, f_stderr = client.exec_command(commands)
             exit_code = f_stdout.channel.recv_exit_status()
@@ -115,9 +113,11 @@ class DaskPool:
         reservations = self.connection.get_all_reservations()
         for r in reservations:
             for i in r.instances:
-                if (i.image_id == self.image_id
+                if (
+                    i.image_id == self.image_id
                     and i.instance_type == self.instance_type
-                    and i.state == "running"):
+                    and i.state == "running"
+                ):
                     instances.append(i)
         return instances
 
