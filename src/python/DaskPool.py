@@ -1,19 +1,25 @@
+import paramiko
 import time
 
 import boto.ec2
 
 
+USERNAME = "ubuntu"
+KEY_FILENAME = "/home/ubuntu/.ssh/sbr-01.pem"
+
+
 class DaskPool:
     def __init__(
-        self,
-        region_name="us-east-1",
-        image_id="ami-0dc8ed438643bfda3",
-        target_count=3,
-        key_name="dask-01",
-        security_groups=["dask-01"],
-        instance_type="t2.micro",
-        max_sleep=60,
-        **kwargs
+            self,
+            region_name="us-east-1",
+            image_id="ami-0dc8ed438643bfda3",
+            target_count=3,
+            key_name="dask-01",
+            security_groups=["dask-01"],
+            instance_type="t2.micro",
+            max_sleep=60,
+            branch="rl/distributed-script-processing",
+            **kwargs
     ):
         self.region_name = region_name
         self.image_id = image_id
@@ -22,6 +28,7 @@ class DaskPool:
         self.security_groups = security_groups
         self.instance_type = instance_type
         self.max_sleep = max_sleep
+        self.branch = branch
         self.connection = boto.ec2.connect_to_region(self.region_name, **kwargs)
         self.instances = []
 
@@ -65,6 +72,35 @@ class DaskPool:
         for i in self.instances:
             i.terminate()
         self._wait_for_pool(0)
+
+    def checkout_branch(self):
+        commands = " ; ".join(
+            [
+                "cd secure-bioinformatics-reuse",
+                "git checkout " + self.branch,
+                "git stash",
+                "git pull",
+            ]
+        )
+        client = paramiko.client.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        # client.load_system_host_keys()
+        for i in self.instances:
+            print(i.ip_address)
+            client.connect(
+                i.ip_address,
+                username=USERNAME,
+                key_filename=KEY_FILENAME,
+            )
+            f_stdin, f_stdout, f_stderr = client.exec_command(commands)
+            exit_code = f_stdout.channel.recv_exit_status()
+            stdout = f_stdout.read()
+            stderr = f_stderr.read()
+            if exit_code != 0:
+                raise Exception(stderr)
+            else:
+                print(stdout)
+            client.close()
 
     def _get_instances(self):
         instances = []
