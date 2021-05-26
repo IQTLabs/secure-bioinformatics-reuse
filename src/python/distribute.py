@@ -126,7 +126,7 @@ def strace_pipeline_run(pipeline, options):
 
 
 def test_distributed_strace():
-    daskPool = DaskPool()
+    daskPool = DaskPool(instance_type="t3.large")
     daskPool.maintain_pool()
     daskPool.checkout_branch()
     cluster = SSHCluster(
