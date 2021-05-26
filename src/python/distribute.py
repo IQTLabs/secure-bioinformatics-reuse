@@ -42,10 +42,10 @@ def list_repositories():
     return repositories
 
 
-def aura_scan(python_src, scan_home):
+def aura_scan(python_src, scan_home, options=""):
     completed_process = subprocess.run(
         [
-            os.path.join(SCRIPTS_DIR, "aura-scan.sh"), python_src, scan_home,
+            os.path.join(SCRIPTS_DIR, "aura-scan.sh"), options, python_src, scan_home,
         ],
         capture_output=True,
     )
@@ -56,12 +56,13 @@ def list_recipes():
     return sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes")))
 
 
-def strace_conda_install(package):
+def strace_conda_install(package, options=""):
     completed_process = subprocess.run(
         [
             SHELL_CMD,
             "-i",
             os.path.join(SCRIPTS_DIR, "strace-conda-install.sh"),
+            options,
             package,
         ],
         capture_output=True,
@@ -85,10 +86,11 @@ def list_dockerfiles():
     return dirpaths, packages, versions
 
 
-def strace_docker_build(package, version):
+def strace_docker_build(package, version, options=""):
     completed_process = subprocess.run(
         [
             os.path.join(SCRIPTS_DIR, "strace-docker-build.sh"),
+            options,
             os.path.join(CONTAINERS_DIR, package, version),
             package,
             version,
@@ -109,12 +111,13 @@ def list_pipelines():
     return pipelines
 
 
-def strace_pipeline_run(pipeline):
+def strace_pipeline_run(pipeline, options):
     completed_process = subprocess.run(
         [
             SHELL_CMD,
             "-i",
             os.path.join(SCRIPTS_DIR, "strace-pipeline-run.sh"),
+            options,
             pipeline,
         ],
         capture_output=True,
