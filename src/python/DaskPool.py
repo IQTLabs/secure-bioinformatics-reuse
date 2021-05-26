@@ -100,11 +100,11 @@ class DaskPool:
             )
             f_stdin, f_stdout, f_stderr = client.exec_command(commands)
             exit_code = f_stdout.channel.recv_exit_status()
-            stdout = f_stdout.read()
-            stderr = f_stderr.read()
             if exit_code != 0:
+                stderr = f_stderr.read()
                 raise Exception(stderr)
             else:
+                stdout = f_stdout.read()
                 logger.debug(stdout)
             client.close()
 
