@@ -8,12 +8,13 @@ NAME
     aura-scan - Use Aura to scan a Python path or Git repository
 
 SYNOPSIS
-    aura-scan [python-path|git-url] scan-home
+    aura-scan python-src scan-home
 
 DESCRIPTION
-    Uses Aura to scan a Python path or Git repository and produce JSON
-    output in the scan home directory. The Python path can be to an
-    individual Python file, or to a directory containing Python files.
+    Uses Aura to scan a Python source, either a path or Git
+    repository, and produce JSON output in the scan home
+    directory. The Python path can be to an individual Python file, or
+    to a directory containing Python files.
 
 OPTIONS 
     None
