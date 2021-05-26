@@ -5,10 +5,10 @@ usage() {
     cat << EOF
 
 NAME
-    aura-scan-path - Use Aura to scan a Python path or Git repository
+    aura-scan - Use Aura to scan a Python path or Git repository
 
 SYNOPSIS
-    aura-scan-path [python-path|git-url] scan-home
+    aura-scan [python-path|git-url] scan-home
 
 DESCRIPTION
     Uses Aura to scan a Python path or Git repository and produce JSON
