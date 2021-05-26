@@ -42,9 +42,11 @@ def list_repositories():
     return repositories
 
 
-def aura_scan(python_file, scan_home):
+def aura_scan(python_src, scan_home):
     completed_process = subprocess.run(
-        [os.path.join(SCRIPTS_DIR, "aura-scan.sh"), python_file, scan_home,],
+        [
+            os.path.join(SCRIPTS_DIR, "aura-scan.sh"), python_src, scan_home,
+        ],
         capture_output=True,
     )
     return completed_process
@@ -134,26 +136,38 @@ def test_distributed_strace():
         scheduler_options={"port": 0, "dashboard_address": ":8797"},
     )
     client = Client(cluster)
-    sci = client.submit(strace_conda_install, "velvet")
-    print(sci.result())
-    sdb = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2")
-    print(sdb.result())
-    spr = client.submit(strace_pipeline_run, "rnaseq")
-    print(spr.result())
+    a = client.submit(strace_conda_install, "velvet")
+    print(a.result())
+    b = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2")
+    print(b.result())
+    c = client.submit(strace_pipeline_run, "rnaseq")
+    print(c.result())
+    d = client.submit(aura_scan, "git@github.com:Public-Health-Bioinformatics/kipper.git", "scan")
+    print(d.result())
 
 
 if __name__ == "__main__":
 
+    """
     repositories = list_repositories()
     print(repositories)
+
+    aura_scan("git@github.com:Public-Health-Bioinformatics/kipper.git", "scan")
 
     recipes = list_recipes()
     print(recipes)
 
+    strace_conda_install("velvet")
+
     dirpaths, packages, versions = list_dockerfiles()
     print(packages)
 
+    strace_docker_build("spectra-cluster-cli", "v1.1.2")
+
     pipelines = list_pipelines()
     print(pipelines)
+
+    strace_pipeline_run("rnaseq")
+    """
 
     test_distributed_strace()
