@@ -4,7 +4,7 @@ import os
 from pathlib import PurePath
 import subprocess
 
-from dask.distributed import Client, SSHCluster
+from dask.distributed import Client, SSHCluster, as_completed
 
 from DaskPool import DaskPool
 
@@ -151,6 +151,39 @@ def test_distributed_strace():
     """
 
 
+def test_as_completed():
+    daskPool = DaskPool(instance_type="t3.large")
+    daskPool.maintain_pool()
+    daskPool.checkout_branch()
+    cluster = SSHCluster(
+        [i.ip_address for i in daskPool.instances],
+        connect_options={
+            "known_hosts": None,
+            "client_keys": [os.path.join(KEY_DIR, "dask-01.pem")],
+        },
+        worker_options={"nthreads": 2},
+        scheduler_options={"port": 0, "dashboard_address": ":8797"},
+    )
+    client = Client(cluster)
+
+    recipes = list_recipes()
+
+    futures = []
+    for n_futures in range(len(daskPool.instances)):
+        futures.append(
+            client.submit(strace_conda_install, recipes[n_futures], options="-RP")
+        )
+
+    seq = as_completed(futures)
+    for future in seq:
+        n_futures += 1
+        seq.add(
+            client.submit(strace_conda_install, recipes[n_futures], options="-RP")
+        )
+        if n_futures == 6:
+            break
+
+
 if __name__ == "__main__":
 
     """
@@ -170,6 +203,8 @@ if __name__ == "__main__":
     strace_conda_install("velvet", options="-RP")
     strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RP")
     strace_pipeline_run("rnaseq", options="-RP")
+
+    test_istributed_strace()
     """
 
-    test_distributed_strace()
+    test_as_completed()
