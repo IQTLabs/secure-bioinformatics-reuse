@@ -8,19 +8,26 @@ NAME
     strace-conda-install - trace a conda install of a package
 
 SYNOPSIS
-    strace-conda-install [-c channel] [-s suffix] package
+    strace-conda-install [-c channel] [-s suffix] [-C] [-R] [-H target-host] [-P] package
 
 DESCRIPTION
     Uses strace to trace the installation of a package fron a channel
     using conda.
 
     A directory is created to contain all output files, and each uses
-    a base name give by "strace-conda-install-${package}-${suffix}.
+    a base name give by "strace-conda-install-${package}-${suffix}".
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
 
 OPTIONS 
     -c    The conda channel containing the package, default: bioconda
     -s    The suffix of the base name for the output directory and
           files, default: ""
+    -C    Clean conda environment
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
 
 EOF
 }
@@ -29,7 +36,10 @@ EOF
 channel="bioconda"
 suffix=""
 do_clean=0
-while getopts ":c:s:Ch" opt; do
+do_recursive_copy=0
+target_host=52.207.108.184
+do_purge_output=0
+while getopts ":c:s:CRH:Ph" opt; do
     case $opt in
 	c)
 	    channel="${OPTARG}"
@@ -39,6 +49,15 @@ while getopts ":c:s:Ch" opt; do
 	    ;;
 	C)
 	    do_clean=1
+	    ;;
+	R)
+	    do_recursive_copy=1
+	    ;;
+	H)
+	    target_host=${OPTARG}
+	    ;;
+	P)
+	    do_purge_output=1
 	    ;;
 	h)
 	    usage
@@ -67,10 +86,12 @@ package="${1}"
 
 # Setup
 set -xe
-base_name="strace-conda-install-${package}${suffix}"
-rm -rf ${base_name}
-mkdir ${base_name}
-pushd ${base_name}
+strace_home="strace-conda-install-${package}${suffix}"
+rm -rf ${strace_home}
+mkdir -p ${strace_home}
+
+# Work in strace home
+pushd ${strace_home}
 
 # Conda install
 base_name="strace-conda-install-${package}${suffix}"
@@ -93,7 +114,7 @@ commands="$(cat ${base_name}.log \
 		| uniq)"
 rm -f ${base_name}.cmd
 for command in $commands; do
-    man -f $command >> ${base_name}.cmd
+    man -f $command >> ${base_name}/${base_name}.cmd
 done
 
 # Conda install tracing child processes as they are created by
@@ -124,5 +145,19 @@ if [ ${do_clean} == 1 ]; then
     conda clean -y --all
 fi
 
-# Teardown
+# Work in original directory
 popd
+
+# Recursively copy the output directory to the target host
+if [ $do_recursive_copy == 1 ]; then
+    scp \
+	-i ~/.ssh/sbr-01.pem \
+	-o "StrictHostKeyChecking no" \
+	-r ${strace_home} \
+	ubuntu@${target_host}:~/target
+fi
+
+# Teardown
+if [ ${do_purge_output} == 1 ]; then
+    rm -rf ${strace_home}
+fi

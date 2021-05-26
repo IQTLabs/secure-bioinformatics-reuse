@@ -8,23 +8,36 @@ NAME
     strace-pipeline-run - trace run of nf-core pipeline
 
 SYNOPSIS
-    strace-pipeline-run pipeline
+    strace-pipeline-run [-R] [-H target-host] [-P] pipeline
 
 DESCRIPTION
     Uses strace to trace the nextflow run of an nf-core pipeline.
 
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
+
 OPTIONS 
-    None
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
 
 EOF
 }
 
 # Parse command line options
-do_clean=0
-while getopts ":Ch" opt; do
+do_recursive_copy=0
+target_host=52.207.108.184
+do_purge_output=0
+while getopts ":RH:Ph" opt; do
     case $opt in
-	C)
-	    do_clean=1
+	R)
+	    do_recursive_copy=1
+	    ;;
+	H)
+	    target_host=${OPTARG}
+	    ;;
+	P)
+	    do_purge_output=1
 	    ;;
 	h)
 	    usage
@@ -53,13 +66,16 @@ pipeline="${1}"
 
 # Setup
 set -xe
-base_name="strace-pipeline-run-${pipeline}"
-rm -rf ${base_name}
-mkdir ${base_name}
-pushd ${base_name}
+strace_home="strace-pipeline-run-${pipeline}"
+rm -rf ${strace_home}
+mkdir ${strace_home}
 conda activate nf-core
 
+# Work in strace home
+pushd ${strace_home}
+
 # Pipeline run
+base_name="strace-pipeline-run-${pipeline}"
 rm -f ${base_name}.log
 strace -o ${base_name}.log \
        nextflow run nf-core/${pipeline} -profile test,docker
@@ -76,6 +92,10 @@ for command in $commands; do
     man -f $command >> ${base_name}.cmd
 done
 
-# Teardown
-conda deactivate
+# Work in original directory
 popd
+
+# Teardown
+if [ ${do_purge_output} == 1 ]; then
+    rm -rf ${strace_home}
+fi

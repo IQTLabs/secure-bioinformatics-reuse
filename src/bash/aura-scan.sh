@@ -8,32 +8,39 @@ NAME
     aura-scan - Use Aura to scan a Python path or Git repository
 
 SYNOPSIS
-    aura-scan [-s] [-H target-host] python-src scan-home
+    aura-scan [-R] [-H target-host] [-P] python-src scan-home
 
 DESCRIPTION
     Uses Aura to scan a Python source, either a path or Git
     repository, and produce JSON output in the scan home
     directory. The Python path can be to an individual Python file, or
-    to a directory containing Python files. Optionally copy the output
-    to the target host.
+    to a directory containing Python files.
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
 
 OPTIONS 
-    -s    Do secure copy the results to the target host
+    -R    Recursively copy the output directory to the target host
     -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
 
 EOF
 }
 
 # Parse command line options
-do_secure_copy=0
+do_recursive_copy=0
 target_host=52.207.108.184
-while getopts ":sH:h" opt; do
+do_purge_output=0
+while getopts ":RH:Ph" opt; do
     case $opt in
-	s)
-	    do_secure_copy=1
+	R)
+	    do_recursive_copy=1
 	    ;;
 	H)
 	    target_host=${OPTARG}
+	    ;;
+	P)
+	    do_purge_output=1
 	    ;;
 	h)
 	    usage
@@ -86,8 +93,8 @@ docker run \
        /home/${python_name} -v -f json \
        > ${scan_home}/${scan_name}
 
-# Secure copy the results to the target host
-if [ $do_secure_copy == 1 ]; then
+# Recursively copy the output directory to the target host
+if [ $do_recursive_copy == 1 ]; then
     scp \
 	-i ~/.ssh/sbr-01.pem \
 	-o "StrictHostKeyChecking no" \
@@ -96,7 +103,9 @@ if [ $do_secure_copy == 1 ]; then
 fi
 
 # Teardown
-# Nothing required
 if [ -n "${git_url}" ]; then
     rm -rf ${python_name}
+fi
+if [ ${do_purge_output} == 1 ]; then
+    rm -rf ${scan_home}
 fi
