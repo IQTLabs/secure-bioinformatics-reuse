@@ -88,8 +88,8 @@ rm -rf ${strace_home}
 mkdir ${strace_home}
 output_directory="${PWD}/${strace_home}"
 
-# Work in strace home
-pushd ${strace_home}
+# Work in build directory
+pushd ${build_directory}
 
 # Docker build
 base_name="strace-docker-build-${package}-${version}${suffix}"

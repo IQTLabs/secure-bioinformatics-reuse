@@ -114,7 +114,7 @@ commands="$(cat ${base_name}.log \
 		| uniq)"
 rm -f ${base_name}.cmd
 for command in $commands; do
-    man -f $command >> ${base_name}/${base_name}.cmd
+    man -f $command >> ${base_name}.cmd
 done
 
 # Conda install tracing child processes as they are created by

@@ -95,6 +95,15 @@ done
 # Work in original directory
 popd
 
+# Recursively copy the output directory to the target host
+if [ $do_recursive_copy == 1 ]; then
+    scp \
+	-i ~/.ssh/sbr-01.pem \
+	-o "StrictHostKeyChecking no" \
+	-r ${strace_home} \
+	ubuntu@${target_host}:~/target
+fi
+
 # Teardown
 if [ ${do_purge_output} == 1 ]; then
     rm -rf ${strace_home}
