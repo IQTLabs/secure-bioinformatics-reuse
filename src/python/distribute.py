@@ -30,6 +30,9 @@ logger = logging.getLogger(__name__)
 
 
 def list_repositories():
+    """List repositories which have most lines of code in Python from
+    the Bioinformatics download of 2020-11-11.
+    """
     loc_path = (
         PurePath(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
     )
@@ -43,34 +46,75 @@ def list_repositories():
 
 
 def aura_scan(python_src, scan_home, options=""):
-    completed_process = subprocess.run(
-        [
-            os.path.join(SCRIPTS_DIR, "aura-scan.sh"), options, python_src, scan_home,
-        ],
-        capture_output=True,
-    )
+    """Run a script that uses Aura to scan a Python source, either a
+    path or Git repository, and produce JSON output in the scan home
+    directory. The Python path can be to an individual Python file, or
+    to a directory containing Python files.
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
+
+    OPTIONS
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+    """
+    try:
+        completed_process = subprocess.run(
+            [
+                os.path.join(SCRIPTS_DIR, "aura-scan.sh"), options, python_src, scan_home,
+            ],
+            capture_output=True,
+        )
+    except Excetpion as e:
+        logger.error(e)
     return completed_process
 
 
 def list_recipes():
+    """List recipes in git@github.com:IQTLabs/bioconda-recipes.git.
+    """
     return sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes")))
 
 
 def strace_conda_install(package, options=""):
-    completed_process = subprocess.run(
-        [
-            SHELL_CMD,
-            "-i",
-            os.path.join(SCRIPTS_DIR, "strace-conda-install.sh"),
-            options,
-            package,
-        ],
-        capture_output=True,
-    )
+    """Run a script that uses strace to trace the installation of a
+    package fron a channel using conda.
+
+    A directory is created to contain all output files, and each uses
+    a base name give by "strace-conda-install-${package}-${suffix}".
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
+
+    OPTIONS
+    -c    The conda channel containing the package, default: bioconda
+    -s    The suffix of the base name for the output directory and
+          files, default: ""
+    -C    Clean conda environment
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+    """
+    try:
+        completed_process = subprocess.run(
+            [
+                SHELL_CMD,
+                "-i",
+                os.path.join(SCRIPTS_DIR, "strace-conda-install.sh"),
+                options,
+                package,
+            ],
+            capture_output=True,
+        )
+    except Excetpion as e:
+        logger.error(e)
     return completed_process
 
 
 def list_dockerfiles():
+    """List Dockerfiles in git@github.com:ralatsdc/containers.git.
+    """
     dirpaths = []
     packages = []
     versions = []
@@ -87,20 +131,42 @@ def list_dockerfiles():
 
 
 def strace_docker_build(package, version, options=""):
-    completed_process = subprocess.run(
-        [
-            os.path.join(SCRIPTS_DIR, "strace-docker-build.sh"),
-            options,
-            os.path.join(CONTAINERS_DIR, package, version),
-            package,
-            version,
-        ],
-        capture_output=True,
-    )
+    """Runs a script that uses strace to trace the build of the docker
+    file in the build directory with tag "package-version".
+
+    A directory is created to contain all output files, and each uses
+    a base name give by "strace-docker-build-${package}-%{version}${suffix}".
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
+
+    OPTIONS
+    -s    The suffix of the base name for the output directory and
+          files, default: ""
+    -C    Clean conda environment
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+    """
+    try:
+        completed_process = subprocess.run(
+            [
+                os.path.join(SCRIPTS_DIR, "strace-docker-build.sh"),
+                options,
+                os.path.join(CONTAINERS_DIR, package, version),
+                package,
+                version,
+            ],
+            capture_output=True,
+        )
+    except Excetpion as e:
+        logger.error(e)
     return completed_process
 
 
 def list_pipelines():
+    """List pipelines in the nf-core conda package.
+    """
     completed_process = subprocess.run(
         [SHELL_CMD, "-i", os.path.join(SCRIPTS_DIR, "list-pipelines.sh"),],
         capture_output=True,
@@ -112,16 +178,30 @@ def list_pipelines():
 
 
 def strace_pipeline_run(pipeline, options):
-    completed_process = subprocess.run(
-        [
-            SHELL_CMD,
-            "-i",
-            os.path.join(SCRIPTS_DIR, "strace-pipeline-run.sh"),
-            options,
-            pipeline,
-        ],
-        capture_output=True,
-    )
+    """Run a script that uses strace to trace the nextflow run of an
+    nf-core pipeline.
+
+    Optionally recursively copy the output directory to the target
+    host, or purge the output directory.
+
+    OPTIONS
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+    """
+    try:
+        completed_process = subprocess.run(
+            [
+                SHELL_CMD,
+                "-i",
+                os.path.join(SCRIPTS_DIR, "strace-pipeline-run.sh"),
+                options,
+                pipeline,
+            ],
+            capture_output=True,
+        )
+    except Excetpion as e:
+        logger.error(e)
     return completed_process
 
 

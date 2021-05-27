@@ -13,6 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 class DaskPool:
+    """Provides methods for managing a pool of EC2 instances for use
+    with Dask.
+    """
     def __init__(
         self,
         region_name="us-east-1",
@@ -37,6 +40,10 @@ class DaskPool:
         self.instances = []
 
     def maintain_pool(self):
+        """Maintains the target count of instances by obtaining the
+        current list of instances, then adding or removing instances
+        as necessary.
+        """
         self.instances = self._get_instances()
         current_count = len(self.instances)
         logger.info("Current count: {0}".format(current_count))
@@ -47,6 +54,8 @@ class DaskPool:
         self._wait_for_pool(self.target_count)
 
     def add_to_pool(self, count):
+        """Adds the specified number of instances to the pool.
+        """
         logger.info("Add count: {0}".format(count))
         self.instances = self._get_instances()
         self.connection.run_instances(
@@ -60,6 +69,8 @@ class DaskPool:
         self._wait_for_pool(len(self.instances) + count)
 
     def remove_from_pool(self, count):
+        """Removes the specified number of instances from the pool.
+        """
         logger.info("Remove count: {0}".format(count))
         self.instances = self._get_instances()
         instance_ids = []
@@ -71,6 +82,8 @@ class DaskPool:
         self._wait_for_pool(len(self.instances) - count)
 
     def terminate_pool(self):
+        """Terminates all instances in the pool.
+        """
         self.instances = self._get_instances()
         for i in self.instances:
             logger.info("Terminating instance: {0}".format(i.id))
@@ -78,10 +91,16 @@ class DaskPool:
         self._wait_for_pool(0)
 
     def restart_pool(self):
+        """ Restarts the pool with a new list of instances.
+        """
         self.terminate_pool()
         self.maintain_pool()
 
     def checkout_branch(self):
+        """Git checkout the branch required for this pool. The state
+        of the repository in each instance is not assumed, so a little
+        clean up is done.
+        """
         commands = " ; ".join(
             [
                 "cd secure-bioinformatics-reuse",
@@ -113,6 +132,7 @@ class DaskPool:
         reservations = self.connection.get_all_reservations()
         for r in reservations:
             for i in r.instances:
+                # TODO: Add a key to identify the pool?
                 if (
                     i.image_id == self.image_id
                     and i.instance_type == self.instance_type
