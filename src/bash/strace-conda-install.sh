@@ -95,12 +95,12 @@ pushd ${strace_home}
 
 # Conda install
 base_name="strace-conda-install-${package}${suffix}"
-conda create -y --name sbr
-conda activate sbr
+conda create -y --name ${package}-${suffix}
+conda activate ${package}-${suffix}
 rm -f ${base_name}.log
 strace -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
-conda remove -y --name sbr --all
+conda remove -y --name ${package}-${suffix} --all
 if [ ${do_clean} == 1 ]; then
     conda clean -y --all
 fi
@@ -121,12 +121,12 @@ done
 # currently traced processes as a result of the fork(2), vfork(2) and
 # clone(2) system calls
 base_name="strace-f-conda-install-${package}${suffix}"
-conda create -y --name sbr
-conda activate sbr
+conda create -y --name ${package}-${suffix}-f
+conda activate ${package}-${suffix}-f
 rm -f ${base_name}.log
 strace -f -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
-conda remove -y --name sbr --all
+conda remove -y --name ${package}-${suffix}-f --all
 if [ ${do_clean} == 1 ]; then
     conda clean -y --all
 fi
@@ -135,12 +135,12 @@ fi
 # currently traced processes as a result of the fork(2), vfork(2) and
 # clone(2) system calls and output to separate files
 base_name="strace-ff-conda-install-${package}${suffix}"
-conda create -y --name sbr
-conda activate sbr
+conda create -y --name ${package}-${suffix}-ff
+conda activate ${package}-${suffix}-ff
 rm -f ${base_name}.log
 strace -ff -o ${base_name}.log conda install -y -c ${channel} ${package}
 conda deactivate
-conda remove -y --name sbr --all
+conda remove -y --name ${package}-${suffix}-ff --all
 if [ ${do_clean} == 1 ]; then
     conda clean -y --all
 fi
