@@ -246,22 +246,25 @@ def test_as_completed():
     )
     client = Client(cluster)
 
+    n_futures = 0
+    submitted_futures = []
     recipes = list_recipes()
-
-    futures = []
-    for n_futures in range(len(daskPool.instances)):
-        futures.append(
-            client.submit(strace_conda_install, recipes[n_futures], options="-RP")
+    for recipe in recipes:
+        submitted_futures.append(
+            client.submit(strace_conda_install, recipe, options="-RP")
         )
-
-    seq = as_completed(futures)
-    for future in seq:
         n_futures += 1
-        seq.add(
-            client.submit(strace_conda_install, recipes[n_futures], options="-RP")
-        )
-        if n_futures == 6:
+        if n_futures == len(daskPool.instances):
             break
+
+    as_completed_futures = as_completed(submitted_futures)
+    for future in as_completed_futures:
+        print(future.result())
+        n_futures += 1
+        if n_futures < 6:
+            as_completed_futures.add(
+                client.submit(strace_conda_install, recipes[n_futures], options="-RP")
+            )
 
 
 if __name__ == "__main__":
@@ -280,11 +283,13 @@ if __name__ == "__main__":
     print(pipelines)
 
     aura_scan("git@github.com:Public-Health-Bioinformatics/kipper.git", "scan", options="-RP")
-    strace_conda_install("velvet", options="-RP")
     strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RP")
     strace_pipeline_run("rnaseq", options="-RP")
 
     test_istributed_strace()
-    """
 
+    recipes = list_recipes()
+    for i_recipe in range(3):
+        strace_conda_install(recipes[i_recipe], options="-RP")
+    """
     test_as_completed()
