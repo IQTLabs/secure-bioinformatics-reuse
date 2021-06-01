@@ -46,7 +46,7 @@ def list_repositories():
     return repositories
 
 
-def aura_scan(python_src, scan_home, options=""):
+def aura_scan(python_src, scan_home="scan", options=""):
     """Run a script that uses Aura to scan a Python source, either a
     path or Git repository, and produce JSON output in the scan home
     directory. The Python path can be to an individual Python file, or
