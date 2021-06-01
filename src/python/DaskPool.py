@@ -8,10 +8,9 @@ import boto.ec2
 USERNAME = "ubuntu"
 KEY_FILENAME = "/home/ubuntu/.ssh/sbr-01.pem"
 
-
 logger = logging.getLogger(__name__)
 
-
+# TODO: Need a key to make instances unique
 class DaskPool:
     """Provides methods for managing a pool of EC2 instances for use
     with Dask.
