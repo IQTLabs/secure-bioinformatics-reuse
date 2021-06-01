@@ -42,7 +42,7 @@ def list_repositories():
     repositories = []
     for d in loc:
         if list(d)[1] == "Python":
-            repositories.append(d["git_url"])
+            repositories.append((d["git_url"], ))
     return repositories
 
 
@@ -75,7 +75,10 @@ def aura_scan(python_src, scan_home, options=""):
 def list_recipes():
     """List recipes in git@github.com:IQTLabs/bioconda-recipes.git.
     """
-    return sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes")))
+    recipes = []
+    for recipe in sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes"))):
+        recipes.append((recipe, ))
+    return recipes
 
 
 def strace_conda_install(package, options=""):
@@ -116,19 +119,15 @@ def strace_conda_install(package, options=""):
 def list_dockerfiles():
     """List Dockerfiles in git@github.com:ralatsdc/containers.git.
     """
-    dirpaths = []
-    packages = []
-    versions = []
+    dockerfiles = []
     for dirpath, dirnames, filenames in os.walk(CONTAINERS_DIR):
         for filename in filenames:
             if filename == "Dockerfile":
                 package = os.path.basename(os.path.dirname(dirpath))
                 version = os.path.basename(dirpath)
                 if package != "containers":
-                    dirpaths.append(dirpath)
-                    packages.append(package)
-                    versions.append(version)
-    return dirpaths, packages, versions
+                    dockerfiles.append((package, version))
+    return dockerfiles
 
 
 def strace_docker_build(package, version, options=""):
@@ -173,8 +172,11 @@ def list_pipelines():
         capture_output=True,
         text=True,
     )
-    pipelines = completed_process.stdout.split("\n")
-    pipelines.remove("")
+    lines = completed_process.stdout.split("\n")
+    lines.remove("")
+    pipelines = []
+    for line in lines:
+        pipelines.append((line, ))
     return pipelines
 
 
