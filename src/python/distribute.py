@@ -83,7 +83,7 @@ def list_recipes():
 
 def strace_conda_install(package, options=""):
     """Run a script that uses strace to trace the installation of a
-    package fron a channel using conda.
+    package from a channel using conda.
 
     A directory is created to contain all output files, and each uses
     a base name give by "strace-conda-install-${package}-${suffix}".
