@@ -1,3 +1,4 @@
+from argparse import ArgumentParser
 import json
 import logging
 import os
@@ -219,77 +220,80 @@ def test_distributed_strace():
         scheduler_options={"port": 0, "dashboard_address": ":8797"},
     )
     client = Client(cluster)
-    a = client.submit(aura_scan, "git@github.com:Public-Health-Bioinformatics/kipper.git", "scan", options="-RP")
-    print(a.result())
-    b = client.submit(strace_conda_install, "velvet", options="-RP")
-    print(b.result())
-    c = client.submit(strace_docker_build, "spectra-cluster-cli", "v1.1.2", options="-RP")
-    print(c.result())
+    return pool, cluster, client
+
+
+def teardown_pool(pool):
+    """Terminates all instances in the pool.
     """
-    d = client.submit(strace_pipeline_run, "rnaseq", options="-RP")
-    print(d.result())
+    pool.terminate_pool()
+
+
+def distribute_runs(run_case, max_runs=9, do_teardown_pool=False):
+    """ Setup a DaskPool instance, select a function and corresponding
+    function arguments list, run the functions on the corresponding
+    Dask cluster, and terminate the pool, if requested.
     """
+    # Setup a DaskPool instance
+    pool, cluster, client = setup_pool()
 
+    # Select a function and corresponding function arguments list
+    if run_case == "aura_scan":
+        run_function = aura_scan
+        run_args_list = list_repositories() 
 
-def test_as_completed():
-    daskPool = DaskPool(instance_type="t3.large")
-    daskPool.maintain_pool()
-    daskPool.checkout_branch()
-    cluster = SSHCluster(
-        [i.ip_address for i in daskPool.instances],
-        connect_options={
-            "known_hosts": None,
-            "client_keys": [os.path.join(KEY_DIR, "dask-01.pem")],
-        },
-        worker_options={"nthreads": 2},
-        scheduler_options={"port": 0, "dashboard_address": ":8797"},
-    )
-    client = Client(cluster)
+    elif run_case == "strace_conda_install":
+        run_function = strace_conda_install
+        run_args_list = list_recipes()
 
+    elif run_case == "strace_docker_build":
+        run_function = strace_docker_build
+        run_args_list = list_dockerfiles()
+
+    elif run_case == "strace_pipeline_run":
+        run_function = strace_pipeline_run
+        run_args_list = list_pipelines()
+
+    # Submit the same number of functions to the cluster as the number
+    # of pool instances
     n_futures = 0
     submitted_futures = []
-    recipes = list_recipes()
-    for recipe in recipes:
+    for run_args in run_args_list:
         submitted_futures.append(
-            client.submit(strace_conda_install, recipe, options="-RP")
+            client.submit(run_function, *run_args, options="-RP")
         )
         n_futures += 1
-        if n_futures == len(daskPool.instances):
+        if n_futures == len(pool.instances):
             break
 
+    # Submit another function to the cluster whenever a previously
+    # submitted function completes
     as_completed_futures = as_completed(submitted_futures)
     for future in as_completed_futures:
-        print(future.result())
         n_futures += 1
-        if n_futures < 6:
+        if n_futures < max_runs:
             as_completed_futures.add(
-                client.submit(strace_conda_install, recipes[n_futures], options="-RP")
+                client.submit(run_function, *run_args_list[n_futures], options="-RP")
             )
+
+    # Terminate the pool, if requested.
+    if do_teardown_pool:
+        teardown_pool(pool)
 
 
 if __name__ == "__main__":
-
-    """
-    repositories = list_repositories()
-    print(repositories)
-
-    recipes = list_recipes()
-    print(recipes)
-
-    dirpaths, packages, versions = list_dockerfiles()
-    print(packages)
-
-    pipelines = list_pipelines()
-    print(pipelines)
-
-    aura_scan("git@github.com:Public-Health-Bioinformatics/kipper.git", "scan", options="-RP")
-    strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RP")
-    strace_pipeline_run("rnaseq", options="-RP")
-
-    test_istributed_strace()
-
-    recipes = list_recipes()
-    for i_recipe in range(3):
-        strace_conda_install(recipes[i_recipe], options="-RP")
-    """
-    test_as_completed()
+    parser = ArgumentParser(description="Run functions on a cluster")
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("-a", "--aura-scan", action="store_true")
+    group.add_argument("-c", "--strace-conda-install", action="store_true")
+    group.add_argument("-d", "--strace-docker-build", action="store_true")
+    group.add_argument("-p", "--strace-pipeline-run", action="store_true")
+    args = parser.parse_args()
+    if args.aura_scan:
+        distribute_runs("aura_scan")
+    if args.strace_conda_install:
+        distribute_runs("strace_conda_install")
+    if args.strace_docker_build:
+        distribute_runs("strace_docker_build")
+    if args.strace_pipeline_run:
+        distribute_runs("strace_pipeline_run")
