@@ -208,12 +208,16 @@ def strace_pipeline_run(pipeline, options):
     return completed_process
 
 
-def test_distributed_strace():
-    daskPool = DaskPool(instance_type="t3.large")
-    daskPool.maintain_pool()
-    daskPool.checkout_branch()
+def setup_pool():
+    """Setup a DaskPool instance by maintaining the target count of
+    instances, and checking out the required branch. Return the
+    DaskPool instance and the Dask SSHCluster, and Client instances.
+    """
+    pool = DaskPool(instance_type="t3.large")
+    pool.maintain_pool()
+    pool.checkout_branch()
     cluster = SSHCluster(
-        [i.ip_address for i in daskPool.instances],
+        [i.ip_address for i in pool.instances],
         connect_options={
             "known_hosts": None,
             "client_keys": [os.path.join(KEY_DIR, "dask-01.pem")],
