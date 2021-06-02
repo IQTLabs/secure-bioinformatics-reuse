@@ -274,28 +274,27 @@ def distribute_runs(
 
     # Submit the same number of functions to the cluster as the number
     # of pool instances
+    n_run_args = 0
     n_futures = 0
     submitted_futures = []
     for run_args in run_args_list:
         # Skip runs for which output paths exist
+        n_run_args += 1
         if run_case == "aura_scan":
             output_path = os.path.join(
                 TARGET_DIR,
                 "scan",
                 os.path.basename(run_args[0]).replace(".git", ".json"),
             )
-
         elif run_case == "strace_conda_install":
             output_path = os.path.join(
                 TARGET_DIR, "strace-conda-install-{0}".format(run_args[0])
             )
-
         elif run_case == "strace_docker_build":
             output_path = os.path.join(
                 TARGET_DIR,
                 "strace-docker-build-{0}-{1}".format(run_args[0], run_args[1]),
             )
-
         elif run_case == "strace_pipeline_run":
             output_path = os.path.join(
                 TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0])
@@ -311,10 +310,11 @@ def distribute_runs(
     # submitted function completes
     as_completed_futures = as_completed(submitted_futures)
     for future in as_completed_futures:
+        n_run_args += 1
         n_futures += 1
         if n_futures < max_runs:
             as_completed_futures.add(
-                client.submit(run_function, *run_args_list[n_futures], options="-RP")
+                client.submit(run_function, *run_args_list[n_run_args], options="-RP")
             )
 
     # Terminate the pool, if requested.
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "-t",
-        "--terminate-pool",
+        "--teardown-pool",
         action="store_true",
         help="terminate machines in cluster",
     )
