@@ -209,12 +209,12 @@ def strace_pipeline_run(pipeline, options):
     return completed_process
 
 
-def setup_pool():
+def setup_pool(target_count=3, instance_type="t3.large"):
     """Setup a DaskPool instance by maintaining the target count of
     instances, and checking out the required branch. Return the
     DaskPool instance and the Dask SSHCluster, and Client instances.
     """
-    pool = DaskPool(instance_type="t3.large")
+    pool = DaskPool(target_count=target_count, instance_type=instance_type)
     pool.maintain_pool()
     pool.checkout_branch()
     cluster = SSHCluster(
@@ -236,13 +236,13 @@ def teardown_pool(pool):
     pool.terminate_pool()
 
 
-def distribute_runs(run_case, max_runs=9, do_teardown_pool=False):
+def distribute_runs(run_case, max_runs=9, target_count=3, instance_type="t3.large", do_teardown_pool=False):
     """ Setup a DaskPool instance, select a function and corresponding
     function arguments list, run the functions on the corresponding
     Dask cluster, and terminate the pool, if requested.
     """
     # Setup a DaskPool instance
-    pool, cluster, client = setup_pool()
+    pool, cluster, client = setup_pool(target_count=target_count, instance_type=instance_type)
 
     # Select a function and corresponding function arguments list
     if run_case == "aura_scan":
@@ -304,16 +304,21 @@ def distribute_runs(run_case, max_runs=9, do_teardown_pool=False):
 if __name__ == "__main__":
     parser = ArgumentParser(description="Run functions on a cluster")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-a", "--aura-scan", action="store_true")
-    group.add_argument("-c", "--strace-conda-install", action="store_true")
-    group.add_argument("-d", "--strace-docker-build", action="store_true")
-    group.add_argument("-p", "--strace-pipeline-run", action="store_true")
+    group.add_argument("-a", "--aura-scan", action="store_true", help="run Aura scans")
+    group.add_argument("-c", "--strace-conda-install", action="store_true", help="trace conda installs")
+    group.add_argument("-d", "--strace-docker-build", action="store_true", help="trace docker builds")
+    group.add_argument("-p", "--strace-pipeline-run", action="store_true", help="trace pipeline runs")
+    parser.add_argument("-R", "--max-runs", default=9, type=int, help="maximum number of runs")
+    parser.add_argument("-C", "--target-count", default=3, type=int, help="target count of machines in cluster")
+    parser.add_argument("-T", "--instance-type", default="t3.large", help="instance type for machines in cluster")
+    parser.add_argument("-t", "--terminate-pool", action="store_true", help="terminate machines in cluseter")
     args = parser.parse_args()
     if args.aura_scan:
-        distribute_runs("aura_scan")
+        run_case = "aura_scan"
     if args.strace_conda_install:
-        distribute_runs("strace_conda_install")
+        run_case = "strace_conda_install"
     if args.strace_docker_build:
-        distribute_runs("strace_docker_build")
+        run_case = "strace_docker_build"
     if args.strace_pipeline_run:
-        distribute_runs("strace_pipeline_run")
+        run_case = "strace_pipeline_run"
+    distribute_runs(run_case, max_runs=options.max_runs, target_count=options.target_count, instance_type=options.instance_type, do_teardown_pool=option.teardown_pool)
