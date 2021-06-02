@@ -15,6 +15,7 @@ class DaskPool:
     """Provides methods for managing a pool of EC2 instances for use
     with Dask.
     """
+
     def __init__(
         self,
         region_name="us-east-1",

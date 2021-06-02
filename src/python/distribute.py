@@ -43,7 +43,7 @@ def list_repositories():
     repositories = []
     for d in loc:
         if list(d)[1] == "Python":
-            repositories.append((d["git_url"], ))
+            repositories.append((d["git_url"],))
     return repositories
 
 
@@ -64,11 +64,14 @@ def aura_scan(python_src, scan_home="scan", options=""):
     try:
         completed_process = subprocess.run(
             [
-                os.path.join(SCRIPTS_DIR, "aura-scan.sh"), options, python_src, scan_home,
+                os.path.join(SCRIPTS_DIR, "aura-scan.sh"),
+                options,
+                python_src,
+                scan_home,
             ],
             capture_output=True,
         )
-    except Excetpion as e:
+    except Exception as e:
         logger.error(e)
     return completed_process
 
@@ -78,7 +81,7 @@ def list_recipes():
     """
     recipes = []
     for recipe in sorted(os.listdir(os.path.join(RECIPES_DIR, "recipes"))):
-        recipes.append((recipe, ))
+        recipes.append((recipe,))
     return recipes
 
 
@@ -112,7 +115,7 @@ def strace_conda_install(package, options=""):
             ],
             capture_output=True,
         )
-    except Excetpion as e:
+    except Exception as e:
         logger.error(e)
     return completed_process
 
@@ -160,7 +163,7 @@ def strace_docker_build(package, version, options=""):
             ],
             capture_output=True,
         )
-    except Excetpion as e:
+    except Exception as e:
         logger.error(e)
     return completed_process
 
@@ -169,7 +172,7 @@ def list_pipelines():
     """List pipelines in the nf-core conda package.
     """
     completed_process = subprocess.run(
-        [SHELL_CMD, "-i", os.path.join(SCRIPTS_DIR, "list-pipelines.sh"),],
+        [SHELL_CMD, "-i", os.path.join(SCRIPTS_DIR, "list-pipelines.sh")],
         capture_output=True,
         text=True,
     )
@@ -177,7 +180,7 @@ def list_pipelines():
     lines.remove("")
     pipelines = []
     for line in lines:
-        pipelines.append((line, ))
+        pipelines.append((line,))
     return pipelines
 
 
@@ -204,7 +207,7 @@ def strace_pipeline_run(pipeline, options):
             ],
             capture_output=True,
         )
-    except Excetpion as e:
+    except Exception as e:
         logger.error(e)
     return completed_process
 
@@ -236,18 +239,26 @@ def teardown_pool(pool):
     pool.terminate_pool()
 
 
-def distribute_runs(run_case, max_runs=9, target_count=3, instance_type="t3.large", do_teardown_pool=False):
+def distribute_runs(
+    run_case,
+    max_runs=9,
+    target_count=3,
+    instance_type="t3.large",
+    do_teardown_pool=False,
+):
     """ Setup a DaskPool instance, select a function and corresponding
     function arguments list, run the functions on the corresponding
     Dask cluster, and terminate the pool, if requested.
     """
     # Setup a DaskPool instance
-    pool, cluster, client = setup_pool(target_count=target_count, instance_type=instance_type)
+    pool, cluster, client = setup_pool(
+        target_count=target_count, instance_type=instance_type
+    )
 
     # Select a function and corresponding function arguments list
     if run_case == "aura_scan":
         run_function = aura_scan
-        run_args_list = list_repositories() 
+        run_args_list = list_repositories()
 
     elif run_case == "strace_conda_install":
         run_function = strace_conda_install
@@ -266,22 +277,32 @@ def distribute_runs(run_case, max_runs=9, target_count=3, instance_type="t3.larg
     n_futures = 0
     submitted_futures = []
     for run_args in run_args_list:
+        # Skip runs for which output paths exist
         if run_case == "aura_scan":
-            output_path = os.path.join(TARGET_DIR, "scan", os.path.basename(run_args[0]).replace(".git", ".json"))
+            output_path = os.path.join(
+                TARGET_DIR,
+                "scan",
+                os.path.basename(run_args[0]).replace(".git", ".json"),
+            )
 
         elif run_case == "strace_conda_install":
-            output_path = os.path.join(TARGET_DIR, "strace-conda-install-{0}".format(run_args[0]))
+            output_path = os.path.join(
+                TARGET_DIR, "strace-conda-install-{0}".format(run_args[0])
+            )
 
         elif run_case == "strace_docker_build":
-            output_path = os.path.join(TARGET_DIR, "strace-docker-build-{0}-{1}".format(run_args[0], run_args[1]))
+            output_path = os.path.join(
+                TARGET_DIR,
+                "strace-docker-build-{0}-{1}".format(run_args[0], run_args[1]),
+            )
 
         elif run_case == "strace_pipeline_run":
-            output_path = os.path.join(TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0]))
+            output_path = os.path.join(
+                TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0])
+            )
         if os.path.exists(output_path):
             continue
-        submitted_futures.append(
-            client.submit(run_function, *run_args, options="-RP")
-        )
+        submitted_futures.append(client.submit(run_function, *run_args, options="-RP"))
         n_futures += 1
         if n_futures == len(pool.instances):
             break
@@ -305,13 +326,37 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Run functions on a cluster")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("-a", "--aura-scan", action="store_true", help="run Aura scans")
-    group.add_argument("-c", "--strace-conda-install", action="store_true", help="trace conda installs")
-    group.add_argument("-d", "--strace-docker-build", action="store_true", help="trace docker builds")
-    group.add_argument("-p", "--strace-pipeline-run", action="store_true", help="trace pipeline runs")
-    parser.add_argument("-R", "--max-runs", default=9, type=int, help="maximum number of runs")
-    parser.add_argument("-C", "--target-count", default=3, type=int, help="target count of machines in cluster")
-    parser.add_argument("-T", "--instance-type", default="t3.large", help="instance type for machines in cluster")
-    parser.add_argument("-t", "--terminate-pool", action="store_true", help="terminate machines in cluseter")
+    group.add_argument(
+        "-c", "--strace-conda-install", action="store_true", help="trace conda installs"
+    )
+    group.add_argument(
+        "-d", "--strace-docker-build", action="store_true", help="trace docker builds"
+    )
+    group.add_argument(
+        "-p", "--strace-pipeline-run", action="store_true", help="trace pipeline runs"
+    )
+    parser.add_argument(
+        "-R", "--max-runs", default=9, type=int, help="maximum number of runs"
+    )
+    parser.add_argument(
+        "-C",
+        "--target-count",
+        default=3,
+        type=int,
+        help="target count of machines in cluster",
+    )
+    parser.add_argument(
+        "-T",
+        "--instance-type",
+        default="t3.large",
+        help="instance type for machines in cluster",
+    )
+    parser.add_argument(
+        "-t",
+        "--terminate-pool",
+        action="store_true",
+        help="terminate machines in cluseter",
+    )
     args = parser.parse_args()
     if args.aura_scan:
         run_case = "aura_scan"
@@ -321,4 +366,10 @@ if __name__ == "__main__":
         run_case = "strace_docker_build"
     if args.strace_pipeline_run:
         run_case = "strace_pipeline_run"
-    distribute_runs(run_case, max_runs=options.max_runs, target_count=options.target_count, instance_type=options.instance_type, do_teardown_pool=option.teardown_pool)
+    distribute_runs(
+        run_case,
+        max_runs=args.max_runs,
+        target_count=args.target_count,
+        instance_type=args.instance_type,
+        do_teardown_pool=args.teardown_pool,
+    )
