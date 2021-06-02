@@ -15,6 +15,7 @@ SHELL_CMD = "/usr/bin/bash"
 SCRIPTS_DIR = "/home/ubuntu/secure-bioinformatics-reuse/src/bash"
 RECIPES_DIR = "/home/ubuntu/bioconda-recipes"
 CONTAINERS_DIR = "/home/ubuntu/containers"
+TARGET_DIR = "/home/ubuntu/target"
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -265,6 +266,19 @@ def distribute_runs(run_case, max_runs=9, do_teardown_pool=False):
     n_futures = 0
     submitted_futures = []
     for run_args in run_args_list:
+        if run_case == "aura_scan":
+            output_path = os.path.join(TARGET_DIR, "scan", os.path.basename(run_args[0]).replace(".git", ".json"))
+
+        elif run_case == "strace_conda_install":
+            output_path = os.path.join(TARGET_DIR, "strace-conda-install-{0}".format(run_args[0]))
+
+        elif run_case == "strace_docker_build":
+            output_path = os.path.join(TARGET_DIR, "strace-docker-build-{0}-{1}".format(run_args[0], run_args[1]))
+
+        elif run_case == "strace_pipeline_run":
+            output_path = os.path.join(TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0]))
+        if os.path.exists(output_path):
+            continue
         submitted_futures.append(
             client.submit(run_function, *run_args, options="-RP")
         )
