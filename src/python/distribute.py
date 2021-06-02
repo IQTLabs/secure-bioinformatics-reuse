@@ -355,7 +355,7 @@ if __name__ == "__main__":
         "-t",
         "--terminate-pool",
         action="store_true",
-        help="terminate machines in cluseter",
+        help="terminate machines in cluster",
     )
     args = parser.parse_args()
     if args.aura_scan:
