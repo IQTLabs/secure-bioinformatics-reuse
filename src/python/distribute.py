@@ -356,17 +356,28 @@ if __name__ == "__main__":
         help="instance type for machines in cluster",
     )
     parser.add_argument(
+        "-s",
+        "--start-pool",
+        action="store_true",
+        help="start instances in cluster",
+    )
+    parser.add_argument(
         "-t",
-        "--teardown-pool",
+        "--terminate-pool",
         action="store_true",
         help="terminate instances in cluster",
     )
     args = parser.parse_args()
 
-    # Terminate the pool, if requested.
-    if args.teardown_pool:
+    # Start instances in the pool, if requested.
+    if args.start_pool:
         pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
-        teardown_pool(pool)
+        pool.maintain_pool()
+
+    # Terminate instances in the pool, if requested.
+    if args.terminate_pool:
+        pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
+        pool.terminate_pool()
 
     # Run the selected function on the cluster
     run_case = ""
