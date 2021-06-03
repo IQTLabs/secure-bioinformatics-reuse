@@ -359,9 +359,16 @@ if __name__ == "__main__":
         "-t",
         "--teardown-pool",
         action="store_true",
-        help="terminate machines in cluster",
+        help="terminate instances in cluster",
     )
     args = parser.parse_args()
+
+    # Terminate the pool, if requested.
+    if do_teardown_pool:
+        teardown_pool(pool)
+
+    # Run the selected function on the cluster
+    run_case = ""
     if args.aura_scan:
         run_case = "aura_scan"
     if args.strace_conda_install:
@@ -370,10 +377,11 @@ if __name__ == "__main__":
         run_case = "strace_docker_build"
     if args.strace_pipeline_run:
         run_case = "strace_pipeline_run"
-    distribute_runs(
-        run_case,
-        max_runs=args.max_runs,
-        target_count=args.target_count,
-        instance_type=args.instance_type,
-        do_teardown_pool=args.teardown_pool,
-    )
+    if run_case != "":
+        distribute_runs(
+            run_case,
+            max_runs=args.max_runs,
+            target_count=args.target_count,
+            instance_type=args.instance_type,
+            do_teardown_pool=args.teardown_pool,
+        )
