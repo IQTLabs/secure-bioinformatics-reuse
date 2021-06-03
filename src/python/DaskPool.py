@@ -24,7 +24,8 @@ class DaskPool:
         key_name="dask-01",
         security_groups=["dask-01"],
         instance_type="t2.micro",
-        max_sleep=60,
+        sleep_stp=10,
+        sleep_max=60,
         branch="rl/distributed-script-processing",
         **kwargs
     ):
@@ -34,7 +35,8 @@ class DaskPool:
         self.key_name = key_name
         self.security_groups = security_groups
         self.instance_type = instance_type
-        self.max_sleep = max_sleep
+        self.sleep_stp = sleep_stp
+        self.sleep_max = sleep_max
         self.branch = branch
         self.connection = boto.ec2.connect_to_region(self.region_name, **kwargs)
         self.instances = []
@@ -143,13 +145,14 @@ class DaskPool:
 
     def _wait_for_pool(self, count):
         sleep = 0
-        while sleep < self.max_sleep:
+        while sleep < self.sleep_max:
             self.instances = self._get_instances()
             if len(self.instances) == count:
                 break
             else:
-                time.sleep(1)
-                sleep += 1
+                logger.info("Sleeping {0}".format(self.sleep_stp))
+                time.sleep(self.sleep_stp)
+                sleep += self.sleep_stp
 
 
 def main():
