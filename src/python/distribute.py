@@ -316,7 +316,7 @@ def distribute_runs(
     for future in as_completed_futures:
         n_run_args += 1
         n_futures += 1
-        if n_futures < max_runs:
+        if n_futures < max_runs and n_futures < len(run_args_list):
             logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args]))
             as_completed_futures.add(
                 client.submit(run_function, *run_args_list[n_run_args], options="-RP")
