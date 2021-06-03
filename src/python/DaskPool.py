@@ -39,7 +39,7 @@ class DaskPool:
         self.sleep_max = sleep_max
         self.branch = branch
         self.connection = boto.ec2.connect_to_region(self.region_name, **kwargs)
-        self.instances = []
+        self.instances = self._get_instances()
 
     def maintain_pool(self):
         """Maintains the target count of instances by obtaining the
