@@ -244,7 +244,7 @@ def distribute_runs(
     max_runs=9,
     target_count=3,
     instance_type="t3.large",
-    do_teardown_pool=False,
+    teardown_pool=False,
 ):
     """ Setup a DaskPool instance, select a function and corresponding
     function arguments list, run the functions on the corresponding
@@ -322,7 +322,7 @@ def distribute_runs(
             )
 
     # Terminate the pool, if requested.
-    if do_teardown_pool:
+    if teardown_pool:
         teardown_pool(pool)
 
 
@@ -364,7 +364,8 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     # Terminate the pool, if requested.
-    if do_teardown_pool:
+    if args.teardown_pool:
+        pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
         teardown_pool(pool)
 
     # Run the selected function on the cluster
@@ -383,5 +384,5 @@ if __name__ == "__main__":
             max_runs=args.max_runs,
             target_count=args.target_count,
             instance_type=args.instance_type,
-            do_teardown_pool=args.teardown_pool,
+            teardown_pool=args.teardown_pool,
         )
