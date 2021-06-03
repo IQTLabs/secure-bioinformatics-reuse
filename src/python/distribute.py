@@ -250,6 +250,7 @@ def distribute_runs(
     function arguments list, run the functions on the corresponding
     Dask cluster, and terminate the pool, if requested.
     """
+    # TODO: mkdir -p ~/target/scan
     # Setup a DaskPool instance
     pool, cluster, client = setup_pool(
         target_count=target_count, instance_type=instance_type
@@ -320,6 +321,7 @@ def distribute_runs(
             as_completed_futures.add(
                 client.submit(run_function, *run_args_list[n_run_args], options="-RP")
             )
+    logger.info("Submitted {0} runs".format(n_futures))
 
     # Terminate the pool, if requested.
     if teardown_pool:
@@ -329,19 +331,6 @@ def distribute_runs(
 if __name__ == "__main__":
     parser = ArgumentParser(description="Run functions on a cluster")
     group = parser.add_mutually_exclusive_group()
-    group.add_argument("-a", "--aura-scan", action="store_true", help="run Aura scans")
-    group.add_argument(
-        "-c", "--strace-conda-install", action="store_true", help="trace conda installs"
-    )
-    group.add_argument(
-        "-d", "--strace-docker-build", action="store_true", help="trace docker builds"
-    )
-    group.add_argument(
-        "-p", "--strace-pipeline-run", action="store_true", help="trace pipeline runs"
-    )
-    parser.add_argument(
-        "-R", "--max-runs", default=9, type=int, help="maximum number of runs"
-    )
     parser.add_argument(
         "-C",
         "--target-count",
@@ -367,6 +356,31 @@ if __name__ == "__main__":
         action="store_true",
         help="terminate instances in cluster",
     )
+    parser.add_argument(
+        "-R",
+        "--max-runs",
+        default=9,
+        type=int,
+        help="maximum number of runs"
+    )
+    parser.add_argument(
+        "-F",
+        "--run-function",
+        action="store_true",
+        help="run function locally for testing",
+    )
+    group.add_argument(
+        "-a", "--aura-scan", action="store_true", help="run Aura scans"
+    )
+    group.add_argument(
+        "-c", "--strace-conda-install", action="store_true", help="trace conda installs"
+    )
+    group.add_argument(
+        "-d", "--strace-docker-build", action="store_true", help="trace docker builds"
+    )
+    group.add_argument(
+        "-p", "--strace-pipeline-run", action="store_true", help="trace pipeline runs"
+    )
     args = parser.parse_args()
 
     # Start instances in the pool, if requested.
@@ -379,7 +393,7 @@ if __name__ == "__main__":
         pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
         pool.terminate_pool()
 
-    # Run the selected function on the cluster
+    # Run the selected function locally, or on the cluster
     run_case = ""
     if args.aura_scan:
         run_case = "aura_scan"
@@ -390,10 +404,22 @@ if __name__ == "__main__":
     if args.strace_pipeline_run:
         run_case = "strace_pipeline_run"
     if run_case != "":
-        distribute_runs(
-            run_case,
-            max_runs=args.max_runs,
-            target_count=args.target_count,
-            instance_type=args.instance_type,
-            teardown_pool=args.teardown_pool,
-        )
+        if args.run_function:
+            # Run the selected function locally
+            if run_case == "aura_scan":
+                aura_scan("git@github.com:Public-Health-Bioinformatics/kipper.git", "scan", options="-RP")
+            elif run_case == "strace_conda_install":
+                strace_conda_install("velvet", options="-RP")
+            elif run_case == "strace_docker_build":
+                strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RP")
+            elif run_case == "strace_pipeline_run":
+                strace_pipeline_run("rnaseq", options="-RP")
+        else:
+            # Run the selected function on the cluster
+            distribute_runs(
+                run_case,
+                max_runs=args.max_runs,
+                target_count=args.target_count,
+                instance_type=args.instance_type,
+                teardown_pool=args.terminate_pool,
+            )
