@@ -28,7 +28,7 @@ root.addHandler(ch)
 logging.getLogger("asyncssh").setLevel(logging.WARNING)
 logging.getLogger("paramiko.transport").setLevel(logging.WARNING)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger("distribute")
 
 
 def list_repositories():
@@ -256,6 +256,7 @@ def distribute_runs(
     )
 
     # Select a function and corresponding function arguments list
+    logger.info("Run function: {0}".format(run_case))
     if run_case == "aura_scan":
         run_function = aura_scan
         run_args_list = list_repositories()
@@ -300,7 +301,9 @@ def distribute_runs(
                 TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0])
             )
         if os.path.exists(output_path):
+            logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
+        logger.info("Submitting run: {0}{1}".format(run_case, run_args))
         submitted_futures.append(client.submit(run_function, *run_args, options="-RP"))
         n_futures += 1
         if n_futures == len(pool.instances):
@@ -313,6 +316,7 @@ def distribute_runs(
         n_run_args += 1
         n_futures += 1
         if n_futures < max_runs:
+            logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args]))
             as_completed_futures.add(
                 client.submit(run_function, *run_args_list[n_run_args], options="-RP")
             )
