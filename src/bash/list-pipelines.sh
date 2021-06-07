@@ -57,6 +57,7 @@ let h_lines=n_lines-4
 nf-core list --sort stars 2> /dev/null \
     | tail -n ${t_lines} - \
     | head -n ${h_lines} - \
+    | grep -v "dev │" \
     | tr "│" " " \
     | tr -s " " \
     | cut -d " " -f 2
