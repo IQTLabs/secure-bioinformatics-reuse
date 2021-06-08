@@ -308,6 +308,8 @@ def distribute_runs(
         if os.path.exists(output_path):
             logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
+        else:
+            os.mkdir(output_path)
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
         submitted_futures.append(client.submit(run_function, *run_args, options=options))
         n_futures += 1
