@@ -275,12 +275,12 @@ def distribute_runs(
         run_args_list = list_pipelines()
 
     # Submit the same number of functions to the cluster as the number
-    # of pool instances
+    # of pool instances, less one for the scheduler
     n_run_args = 0
     n_futures = 0
     submitted_futures = []
     for run_args in run_args_list:
-        # Skip runs for which output paths exist
+        # Set options, and skip runs for which the output paths exist
         n_run_args += 1
         if run_case == "aura_scan":
             options = "-RP"
@@ -309,27 +309,27 @@ def distribute_runs(
             logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
         else:
+            # Make the output directory to indicate attempt
             os.mkdir(output_path)
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
         submitted_futures.append(client.submit(run_function, *run_args, options=options))
         n_futures += 1
-        if n_futures == len(pool.instances):
+        if n_futures == max_runs or n_futures == len(pool.instances) - 1:
             break
 
     # Submit another function to the cluster whenever a previously
     # submitted function completes
     as_completed_futures = as_completed(submitted_futures)
     for future in as_completed_futures:
+        print(future.result())
         n_run_args += 1
-        n_futures += 1
-        if n_futures < max_runs and n_run_args < len(run_args_list):
+        if n_futures < max_runs and n_run_args <= len(run_args_list):
             logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args - 1]))
             as_completed_futures.add(
                 client.submit(run_function, *run_args_list[n_run_args - 1], options=options)
             )
-        else:
-            break
-    logger.info("Submitted {0} runs".format(n_futures - 1))
+            n_futures += 1
+    logger.info("Submitted {0} runs".format(n_futures))
 
     # Terminate the pool, if requested.
     if teardown_pool:
@@ -395,6 +395,7 @@ if __name__ == "__main__":
     if args.start_pool:
         pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
         pool.maintain_pool()
+        pool.checkout_branch()
 
     # Terminate instances in the pool, if requested.
     if args.terminate_pool:
