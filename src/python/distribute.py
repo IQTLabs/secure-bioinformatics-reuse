@@ -147,7 +147,7 @@ def strace_docker_build(package, version, options=""):
     OPTIONS
     -s    The suffix of the base name for the output directory and
           files, default: ""
-    -C    Clean conda environment
+    -C    Clean up new Docker images
     -R    Recursively copy the output directory to the target host
     -H    Set the target host IP address, default: 52.207.108.184
     -P    Purge output directory
