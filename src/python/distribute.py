@@ -325,7 +325,9 @@ def distribute_runs(
             as_completed_futures.add(
                 client.submit(run_function, *run_args_list[n_run_args], options=options)
             )
-    logger.info("Submitted {0} runs".format(n_futures))
+        else:
+            break
+    logger.info("Submitted {0} runs".format(n_futures - 1))
 
     # Terminate the pool, if requested.
     if teardown_pool:
