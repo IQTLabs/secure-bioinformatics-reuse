@@ -323,9 +323,9 @@ def distribute_runs(
         n_run_args += 1
         n_futures += 1
         if n_futures < max_runs and n_run_args < len(run_args_list):
-            logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args]))
+            logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args - 1]))
             as_completed_futures.add(
-                client.submit(run_function, *run_args_list[n_run_args], options=options)
+                client.submit(run_function, *run_args_list[n_run_args - 1], options=options)
             )
         else:
             break
