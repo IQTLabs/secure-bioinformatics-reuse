@@ -10,6 +10,7 @@ KEY_FILENAME = "/home/ubuntu/.ssh/sbr-01.pem"
 
 logger = logging.getLogger(__name__)
 
+
 # TODO: Need a key to make instances unique
 class DaskPool:
     """Provides methods for managing a pool of EC2 instances for use
@@ -134,7 +135,7 @@ class DaskPool:
         reservations = self.connection.get_all_reservations()
         for r in reservations:
             for i in r.instances:
-                # TODO: Add a key to identify the pool?
+                # TODO: Use a key to identify this pool instance
                 if (
                     i.image_id == self.image_id
                     and i.instance_type == self.instance_type

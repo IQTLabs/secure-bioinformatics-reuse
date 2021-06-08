@@ -240,11 +240,7 @@ def teardown_pool(pool):
 
 
 def distribute_runs(
-    run_case,
-    max_runs=9,
-    target_count=3,
-    instance_type="t3.large",
-    teardown_pool=False,
+    run_case, max_runs=9, target_count=3, instance_type="t3.large", teardown_pool=False,
 ):
     """ Setup a DaskPool instance, select a function and corresponding
     function arguments list, run the functions on the corresponding
@@ -312,7 +308,9 @@ def distribute_runs(
             # Make the output directory to indicate attempt
             os.mkdir(output_path)
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
-        submitted_futures.append(client.submit(run_function, *run_args, options=options))
+        submitted_futures.append(
+            client.submit(run_function, *run_args, options=options)
+        )
         n_futures += 1
         if n_futures == max_runs or n_futures == len(pool.instances) - 1:
             break
@@ -324,9 +322,13 @@ def distribute_runs(
         print(future.result())
         n_run_args += 1
         if n_futures < max_runs and n_run_args <= len(run_args_list):
-            logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args - 1]))
+            logger.info(
+                "Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args - 1])
+            )
             as_completed_futures.add(
-                client.submit(run_function, *run_args_list[n_run_args - 1], options=options)
+                client.submit(
+                    run_function, *run_args_list[n_run_args - 1], options=options
+                )
             )
             n_futures += 1
     logger.info("Submitted {0} runs".format(n_futures))
@@ -353,10 +355,7 @@ if __name__ == "__main__":
         help="instance type for machines in cluster",
     )
     parser.add_argument(
-        "-s",
-        "--start-pool",
-        action="store_true",
-        help="start instances in cluster",
+        "-s", "--start-pool", action="store_true", help="start instances in cluster",
     )
     parser.add_argument(
         "-t",
@@ -365,11 +364,7 @@ if __name__ == "__main__":
         help="terminate instances in cluster",
     )
     parser.add_argument(
-        "-R",
-        "--max-runs",
-        default=9,
-        type=int,
-        help="maximum number of runs"
+        "-R", "--max-runs", default=9, type=int, help="maximum number of runs"
     )
     parser.add_argument(
         "-F",
@@ -377,9 +372,7 @@ if __name__ == "__main__":
         action="store_true",
         help="run function locally for testing",
     )
-    group.add_argument(
-        "-a", "--aura-scan", action="store_true", help="run Aura scans"
-    )
+    group.add_argument("-a", "--aura-scan", action="store_true", help="run Aura scans")
     group.add_argument(
         "-c", "--strace-conda-install", action="store_true", help="trace conda installs"
     )
@@ -393,13 +386,17 @@ if __name__ == "__main__":
 
     # Start instances in the pool, if requested.
     if args.start_pool:
-        pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
+        pool = DaskPool(
+            target_count=args.target_count, instance_type=args.instance_type
+        )
         pool.maintain_pool()
         pool.checkout_branch()
 
     # Terminate instances in the pool, if requested.
     if args.terminate_pool:
-        pool = DaskPool(target_count=args.target_count, instance_type=args.instance_type)
+        pool = DaskPool(
+            target_count=args.target_count, instance_type=args.instance_type
+        )
         pool.terminate_pool()
 
     # Run the selected function locally, or on the cluster
@@ -416,7 +413,11 @@ if __name__ == "__main__":
         if args.run_function:
             # Run the selected function locally
             if run_case == "aura_scan":
-                aura_scan("git@github.com:Public-Health-Bioinformatics/kipper.git", "scan", options="-RP")
+                aura_scan(
+                    "git@github.com:Public-Health-Bioinformatics/kipper.git",
+                    "scan",
+                    options="-RP",
+                )
             elif run_case == "strace_conda_install":
                 strace_conda_install("velvet", options="-RP")
             elif run_case == "strace_docker_build":
