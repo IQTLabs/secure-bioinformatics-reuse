@@ -283,21 +283,25 @@ def distribute_runs(
         # Skip runs for which output paths exist
         n_run_args += 1
         if run_case == "aura_scan":
+            options = "-RP"
             output_path = os.path.join(
                 TARGET_DIR,
                 "scan",
                 os.path.basename(run_args[0]).replace(".git", ".json"),
             )
         elif run_case == "strace_conda_install":
+            options = "-RP"
             output_path = os.path.join(
                 TARGET_DIR, "strace-conda-install-{0}".format(run_args[0])
             )
         elif run_case == "strace_docker_build":
+            options = "-RPC"
             output_path = os.path.join(
                 TARGET_DIR,
                 "strace-docker-build-{0}-{1}".format(run_args[0], run_args[1]),
             )
         elif run_case == "strace_pipeline_run":
+            options = "-RP"
             output_path = os.path.join(
                 TARGET_DIR, "strace-pipeline-run-{0}".format(run_args[0])
             )
@@ -305,7 +309,7 @@ def distribute_runs(
             logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
-        submitted_futures.append(client.submit(run_function, *run_args, options="-RP"))
+        submitted_futures.append(client.submit(run_function, *run_args, options=options))
         n_futures += 1
         if n_futures == len(pool.instances):
             break
@@ -319,7 +323,7 @@ def distribute_runs(
         if n_futures < max_runs and n_run_args < len(run_args_list):
             logger.info("Submitting run: {0}{1}".format(run_case, run_args_list[n_run_args]))
             as_completed_futures.add(
-                client.submit(run_function, *run_args_list[n_run_args], options="-RP")
+                client.submit(run_function, *run_args_list[n_run_args], options=options)
             )
     logger.info("Submitted {0} runs".format(n_futures))
 
@@ -411,7 +415,7 @@ if __name__ == "__main__":
             elif run_case == "strace_conda_install":
                 strace_conda_install("velvet", options="-RP")
             elif run_case == "strace_docker_build":
-                strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RP")
+                strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RPC")
             elif run_case == "strace_pipeline_run":
                 strace_pipeline_run("rnaseq", options="-RP")
         else:
