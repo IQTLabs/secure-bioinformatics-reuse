@@ -12,7 +12,7 @@ SYNOPSIS
 
 DESCRIPTION
     Uses strace to trace the build of the docker file in the build
-    directory with tag "package-version".
+    directory with tag "ralatsdio/${package}:${version}".
 
     A directory is created to contain all output files, and each uses
     a base name give by "strace-docker-build-${package}-%{version}${suffix}".
@@ -23,7 +23,7 @@ DESCRIPTION
 OPTIONS 
     -s    The suffix of the base name for the output directory and
           files, default: ""
-    -C    Clean conda environment
+    -C    Remove new Docker images
     -R    Recursively copy the output directory to the target host
     -H    Set the target host IP address, default: 52.207.108.184
     -P    Purge output directory
@@ -97,7 +97,7 @@ rm -f ${base_name}.log
 docker images \
     | tr -s " " \
     | sort > original_images.txt
-strace -o ${base_name}.log docker build --tag ${package}-${version} .
+strace -o ${base_name}.log docker build --tag ralatsdio/${package}:${version} .
 if [ ${do_clean} == 1 ]; then
     docker images \
 	| tr -s " " \
