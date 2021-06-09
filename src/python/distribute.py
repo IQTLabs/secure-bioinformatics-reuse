@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import json
 import logging
 import os
-from pathlib import PurePath
+from pathlib import Path
 import subprocess
 
 from dask.distributed import Client, SSHCluster, as_completed
@@ -36,7 +36,7 @@ def list_repositories():
     the Bioinformatics download of 2020-11-11.
     """
     loc_path = (
-        PurePath(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
+        Path(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
     )
     with open(loc_path, "r") as loc_fp:
         loc = json.load(loc_fp)
@@ -305,8 +305,11 @@ def distribute_runs(
             logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
         else:
-            # Make the output directory to indicate attempt
-            os.mkdir(output_path)
+            if run_case != "aura_scan":
+                # Make the output directory
+                os.mkdir(output_path)
+            # Indicate attempt
+            Path(output_path).touch()
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
         submitted_futures.append(
             client.submit(run_function, *run_args, options=options)
