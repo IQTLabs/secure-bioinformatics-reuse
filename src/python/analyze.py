@@ -20,11 +20,13 @@ logger = logging.getLogger("analyze")
 
 
 def load_aura_scan_results(force=False):
-    """Deserialize Aura scan results and retain detections with a non-zero score. Collect the scan results and serialize to JSON for faster deserialization.
+    """Deserialize Aura scan results and retain detections with a
+    non-zero score. Collect the scan results and serialize to JSON for
+    faster deserialization.
     """
     if SCAN_RESULTS_FILE.exists() and not force:
         logger.info("Loading scan results file: {0}".format(SCAN_RESULTS_FILE))
-        with SCAN_RESULTS_FILE.open('r') as fp:
+        with SCAN_RESULTS_FILE.open("r") as fp:
             scan_results = json.load(fp)
     else:
         scan_results = []
@@ -32,13 +34,13 @@ def load_aura_scan_results(force=False):
             logger.info("Loading scan path: {0}".format(scan_path))
             scan_result = json.loads(scan_path.read_text())
             detections = []
-            for detection in scan_result['detections']:
-                if detection['score'] > 0:
+            for detection in scan_result["detections"]:
+                if detection["score"] > 0:
                     detections.append(detection)
-            scan_result['detections'] = detections
+            scan_result["detections"] = detections
             scan_results.append(scan_result)
         logger.info("Dumping scan results file: {0}".format(SCAN_RESULTS_FILE))
-        with SCAN_RESULTS_FILE.open('w') as fp:
+        with SCAN_RESULTS_FILE.open("w") as fp:
             json.dump(scan_results, fp, indent=4)
     return scan_results
 
