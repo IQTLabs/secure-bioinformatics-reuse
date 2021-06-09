@@ -416,17 +416,26 @@ if __name__ == "__main__":
         if args.run_function:
             # Run the selected function locally
             if run_case == "aura_scan":
+                python_src = "git@github.com:Public-Health-Bioinformatics/kipper.git"
+                logger.info(f"Running Aura scan on {python_src}")
                 aura_scan(
-                    "git@github.com:Public-Health-Bioinformatics/kipper.git",
+                    python_src,
                     "scan",
                     options="-RP",
                 )
             elif run_case == "strace_conda_install":
-                strace_conda_install("velvet", options="-RP")
+                package = "velvet"
+                logger.info(f"Tracing conda install of {package}")
+                strace_conda_install(package, options="-RP")
             elif run_case == "strace_docker_build":
-                strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RPC")
+                package = "spectra-cluster-cli"
+                version = "v1.1.2"
+                logger.info(f"Tracing docker build of ralatsdio/{package}:{version}")
+                strace_docker_build(package, version, options="-RPC")
             elif run_case == "strace_pipeline_run":
-                strace_pipeline_run("rnaseq", options="-RP")
+                pipeline = "rnaseq"
+                logger.info(f"Tracing nextflow run of {pipeline}")
+                strace_pipeline_run(pipeline, options="-RP")
         else:
             # Run the selected function on the cluster
             distribute_runs(
