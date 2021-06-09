@@ -322,7 +322,7 @@ def distribute_runs(
     # submitted function completes
     as_completed_futures = as_completed(submitted_futures)
     for future in as_completed_futures:
-        print(future.result())
+        logger.debug(future.result())
         n_run_args += 1
         if n_futures < max_runs and n_run_args <= len(run_args_list):
             logger.info(
