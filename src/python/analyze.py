@@ -2,7 +2,6 @@ import json
 import logging
 import numpy as np
 from pathlib import Path
-import pprint
 
 
 TARGET_DIR = Path("/home/ubuntu/target")
@@ -53,11 +52,8 @@ def load_aura_scan_results(force=False):
 
 def summarize_aura_scan_results(scan_results):
     with SCAN_SUMMARY_FILE.open("w") as fp:
-        fp.write(
-            "score,detection type,severity,location,line number\n"
-        )
+        fp.write("score,detection type,severity,location,line number\n")
         for scan_result in scan_results:
-            name = scan_result["name"].replace("/home/", "")
             detections = scan_result["detections"]
             scores = np.array(scan_result["scores"])
             if len(scores) == 0:
@@ -72,9 +68,7 @@ def summarize_aura_scan_results(scan_results):
                 else:
                     line_no = "NA"
                 location = detection["location"].replace("/home/", "")
-                fp.write(
-                    f"{score},{det_type},{severity},{location},{line_no}\n"
-                )
+                fp.write(f"{score},{det_type},{severity},{location},{line_no}\n")
 
 
 if __name__ == "__main__":

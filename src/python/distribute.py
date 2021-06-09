@@ -35,9 +35,7 @@ def list_repositories():
     """List repositories which have most lines of code in Python from
     the Bioinformatics download of 2020-11-11.
     """
-    loc_path = (
-        Path(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
-    )
+    loc_path = Path(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
     with open(loc_path, "r") as loc_fp:
         loc = json.load(loc_fp)
     repositories = []
@@ -419,9 +417,7 @@ if __name__ == "__main__":
                 python_src = "git@github.com:Public-Health-Bioinformatics/kipper.git"
                 logger.info(f"Running Aura scan on {python_src}")
                 aura_scan(
-                    python_src,
-                    "scan",
-                    options="-RP",
+                    python_src, "scan", options="-RP",
                 )
             elif run_case == "strace_conda_install":
                 package = "velvet"
