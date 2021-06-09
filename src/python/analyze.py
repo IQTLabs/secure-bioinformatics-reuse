@@ -1,5 +1,6 @@
 import json
 import logging
+import numpy as np
 from pathlib import Path
 import pprint
 
@@ -7,6 +8,7 @@ import pprint
 TARGET_DIR = Path("/home/ubuntu/target")
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
 SCAN_RESULTS_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".json").name
+SCAN_SUMMARY_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".csv").name
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -45,5 +47,32 @@ def load_aura_scan_results(force=False):
     return scan_results
 
 
+def summarize_aura_scan_results(scan_results):
+    with SCAN_SUMMARY_FILE.open("w") as fp:
+        fp.write(
+            "score,detection type,severity,location,line number\n"
+        )
+        for scan_result in scan_results:
+            name = scan_result["name"].replace("/home/", "")
+            detections = scan_result["detections"]
+            scores = np.array(scan_result["scores"])
+            if len(scores) == 0:
+                continue
+            for i_det in np.nonzero(scores == max(scores))[0]:
+                detection = detections[i_det]
+                score = detection["score"]
+                det_type = detection["type"]
+                severity = detection["severity"]
+                if "line_no" in detection:
+                    line_no = detection["line_no"]
+                else:
+                    line_no = "NA"
+                location = detection["location"].replace("/home/", "")
+                fp.write(
+                    f"{score},{det_type},{severity},{location},{line_no}\n"
+                )
+
+
 if __name__ == "__main__":
     scan_results = load_aura_scan_results()
+    summarize_aura_scan_results(scan_results)
