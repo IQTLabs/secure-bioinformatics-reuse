@@ -36,10 +36,14 @@ def load_aura_scan_results(force=False):
             logger.info("Loading scan path: {0}".format(scan_path))
             scan_result = json.loads(scan_path.read_text())
             detections = []
+            scores = []
             for detection in scan_result["detections"]:
-                if detection["score"] > 0:
+                score = detection["score"]
+                if score > 0:
                     detections.append(detection)
+                    scores.append(score)
             scan_result["detections"] = detections
+            scan_result["scores"] = scores
             scan_results.append(scan_result)
         logger.info("Dumping scan results file: {0}".format(SCAN_RESULTS_FILE))
         with SCAN_RESULTS_FILE.open("w") as fp:
