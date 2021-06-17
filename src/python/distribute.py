@@ -2,7 +2,7 @@ from argparse import ArgumentParser
 import json
 import logging
 import os
-from pathlib import PurePath
+from pathlib import Path
 import subprocess
 
 from dask.distributed import Client, SSHCluster, as_completed
@@ -35,9 +35,7 @@ def list_repositories():
     """List repositories which have most lines of code in Python from
     the Bioinformatics download of 2020-11-11.
     """
-    loc_path = (
-        PurePath(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
-    )
+    loc_path = Path(os.path.realpath(__file__)).parents[2].joinpath("dat", "loc.json")
     with open(loc_path, "r") as loc_fp:
         loc = json.load(loc_fp)
     repositories = []
@@ -305,8 +303,11 @@ def distribute_runs(
             logger.info("Skipping run: {0}{1}".format(run_case, run_args))
             continue
         else:
-            # Make the output directory to indicate attempt
-            os.mkdir(output_path)
+            if run_case != "aura_scan":
+                # Make the output directory
+                os.mkdir(output_path)
+            # Indicate attempt
+            Path(output_path).touch()
         logger.info("Submitting run: {0}{1}".format(run_case, run_args))
         submitted_futures.append(
             client.submit(run_function, *run_args, options=options)
@@ -319,7 +320,7 @@ def distribute_runs(
     # submitted function completes
     as_completed_futures = as_completed(submitted_futures)
     for future in as_completed_futures:
-        print(future.result())
+        logger.debug(future.result())
         n_run_args += 1
         if n_futures < max_runs and n_run_args <= len(run_args_list):
             logger.info(
@@ -413,17 +414,24 @@ if __name__ == "__main__":
         if args.run_function:
             # Run the selected function locally
             if run_case == "aura_scan":
+                python_src = "git@github.com:Public-Health-Bioinformatics/kipper.git"
+                logger.info(f"Running Aura scan on {python_src}")
                 aura_scan(
-                    "git@github.com:Public-Health-Bioinformatics/kipper.git",
-                    "scan",
-                    options="-RP",
+                    python_src, "scan", options="-RP",
                 )
             elif run_case == "strace_conda_install":
-                strace_conda_install("velvet", options="-RP")
+                package = "velvet"
+                logger.info(f"Tracing conda install of {package}")
+                strace_conda_install(package, options="-RP")
             elif run_case == "strace_docker_build":
-                strace_docker_build("spectra-cluster-cli", "v1.1.2", options="-RPC")
+                package = "spectra-cluster-cli"
+                version = "v1.1.2"
+                logger.info(f"Tracing docker build of ralatsdio/{package}:{version}")
+                strace_docker_build(package, version, options="-RPC")
             elif run_case == "strace_pipeline_run":
-                strace_pipeline_run("rnaseq", options="-RP")
+                pipeline = "rnaseq"
+                logger.info(f"Tracing nextflow run of {pipeline}")
+                strace_pipeline_run(pipeline, options="-RP")
         else:
             # Run the selected function on the cluster
             distribute_runs(
