@@ -2,7 +2,7 @@
 
 ## Ubuntu
 
-Initially used Ubuntu 20.04 LTS. May need Ubuntu 18.04 LTS for Conda build.
+Installed Ubuntu 20.04 LTS.
 
 ## Emacs
 
@@ -43,6 +43,20 @@ https://docs.docker.com/engine/install/linux-postinstall/
     sudo systemctl enable docker.service
     sudo systemctl enable containerd.service
 
+## Nextflow
+
+    curl -s https://get.nextflow.io | bash
+
+## nf-core
+
+    conda config --add channels defaults
+    conda config --add channels bioconda
+    conda config --add channels conda-forge
+    conda create --name nf-core python=3.7 nf-core nextflow
+
+    conda activate nf-core
+    nf-core list --json
+
 ## DTrace
 
     sudo apt install systemtap-sdt-dev
@@ -51,30 +65,40 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
     sudo apt install sysdig
 
-# Contributing to Conda
+## Python
+
+    sudo apt-get install python3-venv
+    pip install -r requirements.txt
+
+## AWS
+
+    sudo apt install awscli
+    aws configure
+
+# Contributing to Bioconda
 
 ## Build and test a recipe locally
 
 1. Create a Fork of our Recipes Repo
 
-    git@github.com:IQTLabs/bioconda-recipes.git
+        git@github.com:IQTLabs/bioconda-recipes.git
 
 1. Create Local “Clone”
 
-    git clone git@github.com:IQTLabs/bioconda-recipes.git
-    cd bioconda-recipes
-    git remote add upstream https://github.com/bioconda/bioconda-recipes.git
+        git clone git@github.com:IQTLabs/bioconda-recipes.git
+        cd bioconda-recipes
+        git remote add upstream https://github.com/bioconda/bioconda-recipes.git
 
 1. Create a Branch
 
-    # Make sure our master is up to date with Bioconda
-    git checkout master
-    git pull upstream master
-    git push origin master
+        # Make sure our master is up to date with Bioconda
+        git checkout master
+        git pull upstream master
+        git push origin master
 
-    # Create and checkout a new branch for our work
-    git checkout -b ralatsdc/recipe-for-apc
-    git push -u origin ralatsdc/recipe-for-apc
+        # Create and checkout a new branch for our work
+        git checkout -b ralatsdc/recipe-for-apc
+        git push -u origin ralatsdc/recipe-for-apc
 
 1. Make Some Edits
 
@@ -101,6 +125,25 @@ https://docs.docker.com/engine/install/linux-postinstall/
     channel by providing the path to it:
 
         conda install -c file://$PWD/conda-bld your-package
+
+    For the apc package, for example, after modifying any of the files
+    in recipes/apc, run these commands:
+
+        conda activate apc
+        cd ~/bioconda_recipes
+        mkdir -p conda-bld
+
+        conda remove apc
+        conda clean --all
+        sudo rm -rf conda-bld/*
+        circleci build --volume $PWD/conda-bld:/opt/conda/conda-bld
+        conda install -c file://$PWD/conda-bld apc
+
+    Note that a hash, preferrably sha256, is required to verify the
+    integrity of the source package. Generate the hash using, for
+    example:
+
+        wget -O- https://github.com/ralatsdc/apc/archive/refs/tags/v0.1.2.tar.gz | shasum -a 256
 
 ## Build and test a recipe remotely
 
