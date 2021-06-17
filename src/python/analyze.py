@@ -1,8 +1,9 @@
+from glob import glob
 import json
 import logging
 import numpy as np
 from pathlib import Path
-
+import re
 
 TARGET_DIR = Path("/home/ubuntu/target")
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
@@ -18,6 +19,53 @@ ch.setFormatter(formatter)
 root.addHandler(ch)
 
 logger = logging.getLogger("analyze")
+
+
+def load_strace_results(target_dir=TARGET_DIR):
+
+    # Define patterns for finding internet addresses
+    # TODO: identify how to handle IPv6 as well as IPv4
+    p_inet_addr = re.compile('inet_addr\("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"')
+    # p_connect - covered by pattern above
+    # p_getpeername - covered by pattern above
+    # p_getsockname - covered by pattern above
+    # p_recvfrom - covered by pattern above
+    # p_recvmsg - covered by pattern above
+    # p_sendmsg - does not appear to be needed
+    # p_sendto - does not appear to be needed
+
+    # Define pattern for finding files whose mode has been changed
+    # p_chmod - does not appear to be needed
+
+    # Define pattern for finding files to be executed
+    p_exec_file = re.compile('^exec.*\("(.*?)"')
+
+    strace_results = []
+    for log_file in glob(target_dir.name + "/*/strace-*.log"):
+        strace_result = {}
+        strace_result['log_file'] = log_file
+
+        strace_result['inet_addrs'] = []
+        strace_result['exec_files'] = []
+        with open(log_file, "r") as fp:
+            line = fp.readline()
+            while line is not None:
+
+                s = p_inet_addr.search(line)
+                if s is not None:
+                    inet_addr = {}
+                    inet_addr['line'] = line
+                    inet_addr['addr'] = s.group(1)
+                    strace_result['inet_addrs'].append(inet_addr)
+
+                s = p_exec_file.search(line)
+                if s is not None:
+                    exec_file = {}
+                    exec_file['line'] = line
+                    exec_file['file'] = s.group(1)
+                    strace_result['exec_files'].append(exec_file)
+
+    return strace_results
 
 
 def load_aura_scan_results(force=False):
@@ -72,5 +120,6 @@ def summarize_aura_scan_results(scan_results):
 
 
 if __name__ == "__main__":
-    scan_results = load_aura_scan_results()
-    summarize_aura_scan_results(scan_results)
+    # scan_results = load_aura_scan_results()
+    # summarize_aura_scan_results(scan_results)
+    strace_results = load_strace_results()
