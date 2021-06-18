@@ -5,10 +5,16 @@ import numpy as np
 from pathlib import Path
 import re
 
-TARGET_DIR = Path("/home/ubuntu/target")
+# TARGET_DIR = Path("/home/ubuntu/target")
+TARGET_DIR = Path("/Users/raymondleclair/target-2021-06-17")
+
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
 SCAN_RESULTS_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".json").name
 SCAN_SUMMARY_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".csv").name
+
+STRACE_RESULTS_DIR = TARGET_DIR
+STRACE_RESULTS_FILE = TARGET_DIR / STRACE_RESULTS_DIR.with_suffix(".json").name
+STRACE_SUMMARY_FILE = TARGET_DIR / STRACE_RESULTS_DIR.with_suffix(".csv").name
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -21,49 +27,69 @@ root.addHandler(ch)
 logger = logging.getLogger("analyze")
 
 
-def load_strace_results(target_dir=TARGET_DIR):
+def load_strace_results(target_dir=TARGET_DIR, force=False):
+    """Deserialize strace results and retain internet addresses and
+    executed files.  Collect the strace results and serialize to JSON
+    for faster deserialization.
+    """
+    if STRACE_RESULTS_FILE.exists() and not force:
+        logger.info("Loading strace results file: {0}".format(STRACE_RESULTS_FILE))
+        with STRACE_RESULTS_FILE.open("r") as fp:
+            strace_results = json.load(fp)
+    else:
+        # Define patterns for finding internet addresses
+        # TODO: identify how to handle IPv6 as well as IPv4 addresses
+        p_inet_addr = re.compile('inet_addr\("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"')
+        # p_connect - covered by pattern above
+        # p_getpeername - covered by pattern above
+        # p_getsockname - covered by pattern above
+        # p_recvfrom - covered by pattern above
+        # p_recvmsg - covered by pattern above
+        # p_sendmsg - does not appear to be needed
+        # p_sendto - does not appear to be needed
 
-    # Define patterns for finding internet addresses
-    # TODO: identify how to handle IPv6 as well as IPv4
-    p_inet_addr = re.compile('inet_addr\("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"')
-    # p_connect - covered by pattern above
-    # p_getpeername - covered by pattern above
-    # p_getsockname - covered by pattern above
-    # p_recvfrom - covered by pattern above
-    # p_recvmsg - covered by pattern above
-    # p_sendmsg - does not appear to be needed
-    # p_sendto - does not appear to be needed
+        # Define pattern for finding files whose mode has been changed
+        # p_chmod - does not appear to be needed
 
-    # Define pattern for finding files whose mode has been changed
-    # p_chmod - does not appear to be needed
+        # Define pattern for finding files to be executed
+        p_exec_file = re.compile('^exec.*\("(.*?)"')
 
-    # Define pattern for finding files to be executed
-    p_exec_file = re.compile('^exec.*\("(.*?)"')
+        # Collect the strace results
+        strace_results = []
+        for log_file in glob(str(target_dir) + "/*/strace-*.log"):
+            strace_result = {}
+            strace_result["log_file"] = log_file
 
-    strace_results = []
-    for log_file in glob(target_dir.name + "/*/strace-*.log"):
-        strace_result = {}
-        strace_result['log_file'] = log_file
+            strace_result["inet_addrs"] = []
+            strace_result["exec_files"] = []
+            with open(log_file, "r") as fp:
+                logger.info("Loading strace log file: {0}".format(log_file))
+                line = fp.readline()
+                while len(line) > 0:
 
-        strace_result['inet_addrs'] = []
-        strace_result['exec_files'] = []
-        with open(log_file, "r") as fp:
-            line = fp.readline()
-            while line is not None:
+                    # Find internet addresses
+                    s = p_inet_addr.search(line)
+                    if s is not None:
+                        inet_addr = {}
+                        inet_addr["line"] = line
+                        inet_addr["addr"] = s.group(1)
+                        strace_result["inet_addrs"].append(inet_addr)
 
-                s = p_inet_addr.search(line)
-                if s is not None:
-                    inet_addr = {}
-                    inet_addr['line'] = line
-                    inet_addr['addr'] = s.group(1)
-                    strace_result['inet_addrs'].append(inet_addr)
+                    # Find exectuted files
+                    s = p_exec_file.search(line)
+                    if s is not None:
+                        exec_file = {}
+                        exec_file["line"] = line
+                        exec_file["file"] = s.group(1)
+                        strace_result["exec_files"].append(exec_file)
 
-                s = p_exec_file.search(line)
-                if s is not None:
-                    exec_file = {}
-                    exec_file['line'] = line
-                    exec_file['file'] = s.group(1)
-                    strace_result['exec_files'].append(exec_file)
+                    line = fp.readline()
+
+            strace_results.append(strace_result)
+
+        logger.info("Dumping strace results file: {0}".format(STRACE_RESULTS_FILE))
+        with STRACE_RESULTS_FILE.open("w") as fp:
+            json.dump(strace_results, fp, indent=4)
 
     return strace_results
 
@@ -78,9 +104,10 @@ def load_aura_scan_results(force=False):
         with SCAN_RESULTS_FILE.open("r") as fp:
             scan_results = json.load(fp)
     else:
+        # Collect the scan results
         scan_results = []
         for scan_path in SCAN_RESULTS_DIR.iterdir():
-            logger.info("Loading scan path: {0}".format(scan_path))
+            logger.info("Loading Aura scan path: {0}".format(scan_path))
             scan_result = json.loads(scan_path.read_text())
             detections = []
             scores = []
@@ -91,10 +118,13 @@ def load_aura_scan_results(force=False):
                     scores.append(score)
             scan_result["detections"] = detections
             scan_result["scores"] = scores
+
             scan_results.append(scan_result)
+
         logger.info("Dumping scan results file: {0}".format(SCAN_RESULTS_FILE))
         with SCAN_RESULTS_FILE.open("w") as fp:
             json.dump(scan_results, fp, indent=4)
+
     return scan_results
 
 
