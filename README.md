@@ -1,14 +1,74 @@
-# Installation notes
+# Project Background
+
+The Secure Bioinformatics Reuse effort is a subproject of the Secure
+Code Reuse Project focusing on, well, bioinformatics.
+
+## Goal
+
+The goal of the subproject is to assess security vulnerabilities in
+open source bioinformatic software packages.
+
+## Approach
+
+Our approach is informed by the work of Duan, R. et al. "Towards
+Measuring Supply Chain Attacks on Package Managers for Interpreted
+Languages". arXiv:2002.01139 [cs] (2020) which involved analysis of
+metadata, Abstract Syntax Trees (ASTs), dataflow, and dynamic
+execution of JavaScript, Python, and Ruby from their respective
+package managers.
+
+In this subproject we
+- Implement a simple metadata search of Bioconda recipes or
+  BioContainers Dockerfiles
+- Trace Bioconda package installs and BioContainers Dockerfile builds
+- Trace execution of nf-core Nextflow pipelines
+- Scan recent bioinformatics Python repositories using Aura, a Python
+  tool developed by Martin Čarnogurský to analyze the AST of Python
+  code
+
+Bioconda is a channel for the conda package manager specializing in
+bioinformatics software. Each package added to Bioconda also has a
+corresponding Docker BioContainer automatically created and uploaded
+to Quay.io. nf-core is a community effort to collect a curated set of
+analysis pipelines built using Nextflow, software which enables
+scalable and reproducible scientific workflows using software
+containers.
+
+## Objectives
+
+We seek to answer the following questions:
+- What Bioconda and BioContainer metadata exists? Is the data useful?
+  If so, how can the data be used, and what does the data show?
+- Can useful dynamic analysis be performed during conda installs and
+  docker builds? If so, how can this dynamic analysis be done, and
+  what does the analysis show?
+- Can useful dynamic analysis be performed during nextflow pipeline
+  runs? If so, how can this dynamic analysis be done, and what does
+  the analysis show?
+- What security vulnerabilites does Aura identify in recent
+  bioinformatics repositories? Do the charactierics of vulnerabilities
+  in bioinformatics Python packages differ from Python packages in
+  general?
+
+# Development Environment
+
+The code in this repository requires Conda, Docker, Nextflow, nf-core,
+Python (and associated requirements), and the AWS command line
+interface (for configuration). Dask, an open source library for
+parallel computing written in Python, is used to distribute processing
+over a cluster. As a result, after creating an instance with all
+requirements installed, and Amazon Machine Image is created and used
+for launching images on the cluster. The following sections describe
+installation details.
 
 ## Ubuntu
 
-Installed Ubuntu 20.04 LTS.
-
-## Emacs
-
-    sudo snap install emacs --classic
+All images are based on Ubuntu 20.04 LTS.
 
 ## Conda
+
+Conda is an open source package management system and environment
+management system that runs on Windows, macOS and Linux.
 
 See: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html
 
@@ -17,6 +77,10 @@ See: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html
     conda config --set auto_activate_base false
 
 ## Docker
+
+Docker is a set of platform as a service (PaaS) products that use
+OS-level virtualization to deliver software in packages called
+containers.
 
 See: https://conda.io/projects/conda/en/latest/user-guide/install/linux.html, and
 https://docs.docker.com/engine/install/linux-postinstall/
@@ -45,9 +109,19 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
 ## Nextflow
 
+Nextflow is a reactive workflow framework and a programming DSL that
+eases the writing of data-intensive computational pipelines.
+
+See: https://www.nextflow.io/
+
     curl -s https://get.nextflow.io | bash
 
 ## nf-core
+
+nf-core is a community effort to collect a curated set of analysis pipelines
+built using Nextflow.
+
+See: https://nf-co.re/
 
     conda config --add channels defaults
     conda config --add channels bioconda
@@ -57,39 +131,74 @@ https://docs.docker.com/engine/install/linux-postinstall/
     conda activate nf-core
     nf-core list --json
 
-## DTrace
-
-    sudo apt install systemtap-sdt-dev
-
-## Sysdig
-
-    sudo apt install sysdig
-
 ## Python
+
+Python is an interpreted high-level general-purpose programming
+language.
+
+See: https://www.digitalocean.com/community/tutorials/how-to-install-python-3-and-set-up-a-programming-environment-on-an-ubuntu-20-04-server
 
     sudo apt-get install python3-venv
     pip install -r requirements.txt
 
 ## AWS
 
+Amazon Web Services (AWS) is a subsidiary of Amazon providing
+on-demand cloud computing platforms and APIs to individuals,
+companies, and governments, on a metered pay-as-you-go basis. The AWS
+Command Line Interface (CLI) is a unified tool to manage your AWS
+services.
+
+See: https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-install.html
+
     sudo apt install awscli
     aws configure
 
+## Extra packages
+
+### DTrace
+
+An alternative to strace. Not currently used.
+
+See: http://manpages.ubuntu.com/manpages/focal/man1/dtrace.1.html
+
+    sudo apt install systemtap-sdt-dev
+
+### Sysdig
+
+An alternative to strace that produces JSON output. Not currently
+used.
+
+See: https://github.com/draios/sysdig/wiki/How-to-Install-Sysdig-for-Linux
+
+    sudo apt install sysdig
+
+### Emacs
+
+The one true editor. For the old school, or old school at heart.
+
+See: https://www.gnu.org/software/emacs/
+
+    sudo snap install emacs --classic
+
 # Contributing to Bioconda
+
+Directions for contributing to Bioconda are collected here so that
+simple exploits can be attempted.
 
 ## Build and test a recipe locally
 
-1. Create a Fork of our Recipes Repo
+1. Create a Fork of the IQT Labs Bioconda recipes repository
 
         git@github.com:IQTLabs/bioconda-recipes.git
 
-1. Create Local “Clone”
+1. Create a local “clone”
 
         git clone git@github.com:IQTLabs/bioconda-recipes.git
         cd bioconda-recipes
         git remote add upstream https://github.com/bioconda/bioconda-recipes.git
 
-1. Create a Branch
+1. Create a branch
 
         # Make sure our master is up to date with Bioconda
         git checkout master
@@ -100,13 +209,13 @@ https://docs.docker.com/engine/install/linux-postinstall/
         git checkout -b ralatsdc/recipe-for-apc
         git push -u origin ralatsdc/recipe-for-apc
 
-1. Make Some Edits
+1. Make some edits
 
-1. Testing Recipes Locally Using the Circle CI Client
+1. Test recipes locally using the Circle CI client
 
-    You can execute an almost exact copy of our Linux build pipeline
-    by installing the CircleCI client locally and running it from the
-    folder where your copy of bioconda-recipes resides:
+    You can execute an almost exact copy of the Bioconda Linux build
+    pipeline by installing the CircleCI client locally and running it
+    from the folder where your copy of bioconda-recipes resides:
 
         # Ensure the build container is up-to-date
         docker pull quay.io/bioconda/bioconda-utils-build-env:latest
@@ -147,12 +256,13 @@ https://docs.docker.com/engine/install/linux-postinstall/
 
 ## Build and test a recipe remotely
 
-1. Push Changes
-1. Create a Pull Request
+1. Push changes
 
-    Once you have opened a PR, our build system will start testing
-    your changes. The recipes you have added or modified will be
-    linted and built. Unless you are very lucky, you will encounter
+1. Create a pull request
+
+    Once you have opened a PR, the Bioconda build system will start
+    testing your changes. The recipes you have added or modified will
+    be linted and built. Unless you are very lucky, you will encounter
     some errors during the build you will have to fix. Repeat 2. Make
     Some Edits and 3. Push Changes as often as needed.
 
@@ -162,13 +272,14 @@ https://docs.docker.com/engine/install/linux-postinstall/
     @bioconda/core.
 
     Once you changes have been approved, they will be “merged” into
-    our main repository and the altered packages uploaded to our
-    channel.
+    the Bioconda main repository and the altered packages uploaded to
+    our channel.
 
-1. Delete your Branch
-1. Install Your Package
+1. Delete your branch
 
-# Testing notes
+1. Install your package
+
+# Tool Documentation
 
 ## conda
 
