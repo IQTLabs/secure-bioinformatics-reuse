@@ -181,6 +181,36 @@ See: https://www.gnu.org/software/emacs/
 
     sudo snap install emacs --classic
 
+# Running the scripts
+
+The simple tools in this repository are written in bash and
+distributed using Python. This section contains a summary of usage.
+
+## aura-scan - Use Aura to scan a Python path or Git repository
+
+### SYNOPSIS
+
+aura-scan [-R] [-H target-host] [-P] python-src scan-home
+
+### DESCRIPTION
+
+Uses Aura to scan a Python source, either a path or Git
+repository, and produce JSON output in the scan home
+directory. The Python path can be to an individual Python file, or
+to a directory containing Python files.
+
+Optionally recursively copy the output directory to the target
+host, or purge the output directory.
+
+### OPTIONS 
+
+-R    Recursively copy the output directory to the target host
+-H    Set the target host IP address, default: 52.207.108.184
+-P    Purge output directory
+
+
+
+
 # Contributing to Bioconda
 
 Directions for contributing to Bioconda are collected here so that
