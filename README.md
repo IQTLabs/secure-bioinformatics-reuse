@@ -6,7 +6,7 @@ Code Reuse Project focusing on, well, bioinformatics.
 ## Goal
 
 The goal of the subproject is to assess security vulnerabilities in
-open source bioinformatic software packages.
+open source bioinformatics software packages.
 
 ## Approach
 
@@ -45,8 +45,8 @@ We seek to answer the following questions:
 - Can useful dynamic analysis be performed during nextflow pipeline
   runs? If so, how can this dynamic analysis be done, and what does
   the analysis show?
-- What security vulnerabilites does Aura identify in recent
-  bioinformatics repositories? Do the charactierics of vulnerabilities
+- What security vulnerabilities does Aura identify in recent
+  bioinformatics repositories? Do the characterizes of vulnerabilities
   in bioinformatics Python packages differ from Python packages in
   general?
 
@@ -186,29 +186,139 @@ See: https://www.gnu.org/software/emacs/
 The simple tools in this repository are written in bash and
 distributed using Python. This section contains a summary of usage.
 
-## aura-scan - Use Aura to scan a Python path or Git repository
+## aura-scan.sh
+
+Use Aura to scan a Python path or Git repository.
 
 ### SYNOPSIS
 
-aura-scan [-R] [-H target-host] [-P] python-src scan-home
+    aura-scan [-R] [-H target-host] [-P] python-src scan-home
 
 ### DESCRIPTION
 
-Uses Aura to scan a Python source, either a path or Git
-repository, and produce JSON output in the scan home
-directory. The Python path can be to an individual Python file, or
-to a directory containing Python files.
+Uses Aura to scan a Python source, either a path or Git repository,
+and produce JSON output in the scan home directory. The Python path
+can be to an individual Python file, or to a directory containing
+Python files.
 
-Optionally recursively copy the output directory to the target
-host, or purge the output directory.
+Optionally recursively copy the output directory to the target host,
+or purge the output directory.
 
 ### OPTIONS 
 
--R    Recursively copy the output directory to the target host
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
 
--H    Set the target host IP address, default: 52.207.108.184
+## strace-conda-install.sh
 
--P    Purge output directory
+Trace a conda install of a package.
+
+### SYNOPSIS
+
+    strace-conda-install [-c channel] [-s suffix] [-C] [-R] [-H target-host] [-P] package
+
+### DESCRIPTION
+
+Uses strace to trace the installation of a package fron a channel
+using conda.
+
+A directory is created to contain all output files, and each uses a
+base name give by "strace-conda-install--".
+
+Optionally recursively copy the output directory to the target host,
+or purge the output directory.
+
+### OPTIONS 
+
+    -c    The conda channel containing the package, default: bioconda
+    -s    The suffix of the base name for the output directory and
+          files, default: ""
+    -C    Clean conda environment
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+
+## strace-docker-build.sh
+
+Trace a docker build.
+
+### SYNOPSIS
+
+    strace-docker-build [-s suffix] [-C] [-R] [-H target-host] [-P] build-directory package version
+
+### DESCRIPTION
+
+Uses strace to trace the build of the docker file in the build
+directory with tag "ralatsdio/:".
+
+A directory is created to contain all output files, and each uses a
+base name give by "strace-docker-build--%{version}".
+
+Optionally recursively copy the output directory to the target host,
+or purge the output directory.
+
+### OPTIONS 
+
+    -s    The suffix of the base name for the output directory and
+          files, default: ""
+    -C    Clean up new Docker images
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+
+## strace-pipeline-run.sh
+
+Trace run of nf-core pipeline.
+
+### SYNOPSIS
+
+    strace-pipeline-run [-R] [-H target-host] [-P] pipeline
+
+### DESCRIPTION
+
+Uses strace to trace the nextflow run of an nf-core pipeline.
+
+Optionally recursively copy the output directory to the target host,
+or purge the output directory.
+
+### OPTIONS 
+
+    -R    Recursively copy the output directory to the target host
+    -H    Set the target host IP address, default: 52.207.108.184
+    -P    Purge output directory
+
+## distribute.py
+
+Run functions on a cluster.
+
+### SYNOPSIS
+
+    distribute.py [-h] [-C TARGET_COUNT] [-T INSTANCE_TYPE] [-s] [-t] [-R MAX_RUNS] [-F] [-a | -c | -d | -p]
+
+### DESCRIPTION
+
+Run bash scripts as a subprocess functions on a Dask cluster.
+
+### OPTIONS 
+
+    -h, --help            show this help message and exit
+    -C TARGET_COUNT, --target-count TARGET_COUNT
+                          target count of machines in cluster
+    -T INSTANCE_TYPE, --instance-type INSTANCE_TYPE
+                          instance type for machines in cluster
+    -s, --start-pool      start instances in cluster
+    -t, --terminate-pool  terminate instances in cluster
+    -R MAX_RUNS, --max-runs MAX_RUNS
+                          maximum number of runs
+    -F, --run-function    run function locally for testing
+    -a, --aura-scan       run Aura scans
+    -c, --strace-conda-install
+                          trace conda installs
+    -d, --strace-docker-build
+                          trace docker builds
+    -p, --strace-pipeline-run
+                          trace pipeline runs
 
 # Contributing to Bioconda
 
@@ -277,7 +387,7 @@ simple exploits can be attempted.
         circleci build --volume $PWD/conda-bld:/opt/conda/conda-bld
         conda install -c file://$PWD/conda-bld apc
 
-    Note that a hash, preferrably sha256, is required to verify the
+    Note that a hash, preferably sha256, is required to verify the
     integrity of the source package. Generate the hash using, for
     example:
 
