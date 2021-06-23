@@ -205,11 +205,10 @@ host, or purge the output directory.
 ### OPTIONS 
 
 -R    Recursively copy the output directory to the target host
+
 -H    Set the target host IP address, default: 52.207.108.184
+
 -P    Purge output directory
-
-
-
 
 # Contributing to Bioconda
 
