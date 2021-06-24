@@ -28,9 +28,9 @@ logger = logging.getLogger("analyze")
 
 
 def load_strace_results(target_dir=TARGET_DIR, force=False):
-    """Deserialize strace results and retain internet addresses and
-    executed files.  Collect the strace results and serialize to JSON
-    for faster deserialization.
+    """Read and search strace results and retain internet addresses
+    with ports and executed files.  Collect the strace results and
+    serialize to JSON for faster deserialization.
     """
     if STRACE_RESULTS_FILE.exists() and not force:
         logger.info("Loading strace results file: {0}".format(STRACE_RESULTS_FILE))
@@ -39,14 +39,17 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
     else:
         # Define patterns for finding internet addresses
         # TODO: identify how to handle IPv6 as well as IPv4 addresses
-        p_inet_addr = re.compile('inet_addr\("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"')
+        p_inet_addr = re.compile('inet_addr\("(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"\)')
         # p_connect - covered by pattern above
         # p_getpeername - covered by pattern above
         # p_getsockname - covered by pattern above
-        # p_recvfrom - covered by pattern above
+        # p_recvfrom - does not appear to be needed
         # p_recvmsg - covered by pattern above
         # p_sendmsg - does not appear to be needed
         # p_sendto - does not appear to be needed
+
+        # Define pattern for finding port numbers
+        p_htons = re.compile("htons\((\d{1,5})\)")
 
         # Define pattern for finding files whose mode has been changed
         # p_chmod - does not appear to be needed
@@ -68,12 +71,20 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
                 while len(line) > 0:
 
                     # Find internet addresses
-                    s = p_inet_addr.search(line)
-                    if s is not None:
+                    m_inet_addr = p_inet_addr.search(line)
+                    if m_inet_addr is not None:
                         inet_addr = {}
                         inet_addr["line"] = line
-                        inet_addr["addr"] = s.group(1)
-                        strace_result["inet_addrs"].append(inet_addr)
+                        inet_addr["addr"] = m_inet_addr.group(1)
+
+                        # Find internet addresses
+                        inet_addr["port"] = "0"
+                        m_htons = p_htons.search(line)
+                        if m_htons is not None:
+                            inet_addr["port"] = m_htons.group(1)
+
+                            # Only collect addresses with ports
+                            strace_result["inet_addrs"].append(inet_addr)
 
                     # Find exectuted files
                     s = p_exec_file.search(line)
@@ -152,4 +163,44 @@ def summarize_aura_scan_results(scan_results):
 if __name__ == "__main__":
     # scan_results = load_aura_scan_results()
     # summarize_aura_scan_results(scan_results)
-    strace_results = load_strace_results()
+    strace_results = load_strace_results(force=True)
+
+    """
+    import socket
+
+    target = "104.17.92.24"
+    port = 443
+
+    print(socket.getaddrinfo(target, port))
+
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    sock.connect((target, port))
+
+    sock.settimeout(2)
+
+    query = "GET / HTTPS/1.1\nHost: " + target + "\n\n"
+
+    http_get = bytes(query, 'utf-8')
+
+    # sock.sendall(http_get)
+    sock.send(bytes('GET HTTP/1.1 \r\n', 'utf-8'))
+
+    # data = sock.recvfrom(1024)
+    data = sock.recv(1024)
+
+    # data = data[0]
+    # print(data)
+    print('[+]' + str(data))
+
+    sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
+
+    t_host = "104.17.92.24"
+    t_port = 443
+
+    sock.connect((t_host, t_port))
+    sock.send('GET HTTP/1.1 \r\n')
+
+    ret = sock.recv(1024)
+    print('[+]' + str(ret))
+    """
