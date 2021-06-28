@@ -84,7 +84,11 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
                             strace_result["inet_addrs"].append(inet_addr)
                         else:
                             # Found nonzero but an unequal number of addresses and ports, which is unexpected
-                            logger.error("Found {0} addresses and {1} ports, which is unexpected".format(len(s_inet_addr), len(s_htons)))
+                            logger.error(
+                                "Found {0} addresses and {1} ports, which is unexpected".format(
+                                    len(s_inet_addr), len(s_htons)
+                                )
+                            )
 
                     # Find exectuted files
                     s = p_exec_file.search(line)
