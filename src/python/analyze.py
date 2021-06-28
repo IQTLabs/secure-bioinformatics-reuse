@@ -71,20 +71,20 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
                 while len(line) > 0:
 
                     # Find internet addresses
-                    m_inet_addr = p_inet_addr.search(line)
-                    if m_inet_addr is not None:
-                        inet_addr = {}
-                        inet_addr["line"] = line
-                        inet_addr["addr"] = m_inet_addr.group(1)
-
-                        # Find internet addresses
-                        inet_addr["port"] = "0"
-                        m_htons = p_htons.search(line)
-                        if m_htons is not None:
-                            inet_addr["port"] = m_htons.group(1)
-
-                            # Only collect addresses with ports
+                    s_inet_addr = p_inet_addr.findall(line)
+                    if len(s_inet_addr) > 0:
+                        # Find ports, if specified
+                        s_htons = p_htons.findall(line)
+                        if len(s_inet_addr) == len(s_htons) or len(s_htons) == 0:
+                            # Found nonzero and an equal number of addresses and ports, or only addresses, as for recvmsg()
+                            inet_addr = {}
+                            inet_addr["line"] = line
+                            inet_addr["addr"] = s_inet_addr
+                            inet_addr["port"] = s_htons
                             strace_result["inet_addrs"].append(inet_addr)
+                        else:
+                            # Found nonzero but an unequal number of addresses and ports, which is unexpected
+                            logger.error("Found {0} addresses and {1} ports, which is unexpected".format(len(s_inet_addr), len(s_htons)))
 
                     # Find exectuted files
                     s = p_exec_file.search(line)
