@@ -165,46 +165,8 @@ def summarize_aura_scan_results(scan_results):
 
 
 if __name__ == "__main__":
-    # scan_results = load_aura_scan_results()
-    # summarize_aura_scan_results(scan_results)
-    strace_results = load_strace_results(force=True)
 
-    """
-    import socket
+    scan_results = load_aura_scan_results()
+    strace_results = load_strace_results()
 
-    target = "104.17.92.24"
-    port = 443
-
-    print(socket.getaddrinfo(target, port))
-
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-    sock.connect((target, port))
-
-    sock.settimeout(2)
-
-    query = "GET / HTTPS/1.1\nHost: " + target + "\n\n"
-
-    http_get = bytes(query, 'utf-8')
-
-    # sock.sendall(http_get)
-    sock.send(bytes('GET HTTP/1.1 \r\n', 'utf-8'))
-
-    # data = sock.recvfrom(1024)
-    data = sock.recv(1024)
-
-    # data = data[0]
-    # print(data)
-    print('[+]' + str(data))
-
-    sock = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
-
-    t_host = "104.17.92.24"
-    t_port = 443
-
-    sock.connect((t_host, t_port))
-    sock.send('GET HTTP/1.1 \r\n')
-
-    ret = sock.recv(1024)
-    print('[+]' + str(ret))
-    """
+    summarize_aura_scan_results(scan_results)
