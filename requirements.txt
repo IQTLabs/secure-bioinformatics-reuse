@@ -1,3 +1,5 @@
 boto==2.49.0
 dask[complete]==2021.4.1
+ipython==7.25.0
+matplotlib==3.4.2
 paramiko==2.7.2
