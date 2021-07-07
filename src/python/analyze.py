@@ -23,10 +23,11 @@ STRACE_SUMMARY_FILE = TARGET_DIR / STRACE_RESULTS_DIR.with_suffix(".csv").name
 root = logging.getLogger()
 root.setLevel(logging.INFO)
 
-ch = logging.StreamHandler()
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-ch.setFormatter(formatter)
-root.addHandler(ch)
+if not root.handlers:
+    ch = logging.StreamHandler()
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    ch.setFormatter(formatter)
+    root.addHandler(ch)
 
 logger = logging.getLogger("analyze")
 
