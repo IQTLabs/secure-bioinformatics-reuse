@@ -80,8 +80,8 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
                             # as for recvmsg()
                             inet_addr = {}
                             inet_addr["line"] = line
-                            inet_addr["addr"] = s_inet_addr
-                            inet_addr["port"] = s_htons
+                            inet_addr["addrs"] = s_inet_addr
+                            inet_addr["ports"] = s_htons
                             strace_result["inet_addrs"].append(inet_addr)
                         else:
                             # Found nonzero but an unequal number of
@@ -166,9 +166,64 @@ def summarize_aura_scan_results(scan_results):
                 fp.write(f"{score},{det_type},{severity},{location},{line_no}\n")
 
 
+def count_aura_scan_results(scan_results):
+    scan_counts = {}
+    scan_counts["scores_for_all"] = []
+    scan_counts["scores_for_types"] = {}
+    for scan_result in scan_results:
+        for detection in scan_result["detections"]:
+            score = detection["score"]
+            type = detection["type"]
+            scan_counts["scores_for_all"].append(score)
+            if type not in scan_counts["scores_for_types"]:
+                scan_counts["scores_for_types"][type] = []
+            scan_counts["scores_for_types"][type].append(score)
+    return scan_counts
+
+
 if __name__ == "__main__":
 
-    scan_results = load_aura_scan_results(force=True)
-    strace_results = load_strace_results(force=True)
+    scan_results = load_aura_scan_results()
+    scan_counts = count_aura_scan_results(scan_results)
 
-    # ummarize_aura_scan_results(scan_results)
+    strace_results = load_strace_results()
+
+    strace_counts = {}
+
+    strace_counts["conda_install"] = {}
+    strace_counts["docker_build"] = {}
+    strace_counts["pipeline_run"] = {}
+
+    p_conda_install = re.compile("-conda-install-")
+    p_docker_build = re.compile("-docker-build-")
+    p_pipeline_run = re.compile("-pipeline-run-")
+
+    for strace_result in strace_results:
+
+        log_file = strace_result["log_file"]
+        if p_conda_install.search(log_file) is not None:
+            strace_type = "conda_install"
+            logger.info("Log file {0} is strace of conda install".format(log_file))
+        elif p_docker_build.search(log_file) is not None:
+            strace_type = "docker_build"
+            logger.info("Log file {0} is strace of docker build".format(log_file))
+        elif p_pipeline_run.search(log_file) is not None:
+            strace_type = "pipeline_run"
+            logger.info("Log file {0} is strace of pipeline run".format(log_file))
+        else:
+            raise Exception("Unexpected log file: {0}".format(log_file))
+
+        inet_addrs = strace_result["inet_addrs"]
+        if len(inet_addrs) > 0:
+            for inet_addr in inet_addrs:
+                for addr in inet_addr["addr"]:
+                    addr
+
+        exec_files = strace_result["exec_files"]
+        for exec_file in exec_files:
+            file = exec_file["file"]
+            if file not in strace_counts[strace_type]:
+                strace_counts[strace_type][file] = 0
+            strace_counts[strace_type][file] += 1
+
+    summarize_aura_scan_results(scan_results)
