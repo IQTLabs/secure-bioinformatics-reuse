@@ -25,7 +25,9 @@ root.setLevel(logging.INFO)
 
 if not root.handlers:
     ch = logging.StreamHandler()
-    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter(
+        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    )
     ch.setFormatter(formatter)
     root.addHandler(ch)
 
@@ -232,7 +234,21 @@ def count_strace_results(strace_results):
     return strace_counts
 
 
-def plot_incidence(data, title):
+def plot_scan_counts(scan_counts):
+    unique_types = np.array(list(scan_counts["scores_for_types"].keys()))
+    unique_scores = np.unique(np.array(scan_counts["scores_for_all"]))
+    bin_edges = np.append(unique_scores, 2 * max(unique_scores))
+    counts = pd.DataFrame(0, index=sorted(unique_types), columns=sorted(unique_scores))
+    for unique_type in unique_types:
+        counts.loc[unique_type, :] = np.log10(
+            np.histogram(
+                np.array(scan_counts["scores_for_types"][unique_type]), bins=bin_edges
+            )[0]
+        )
+    plot_counts(counts, "Test")
+
+
+def plot_counts(data, title):
     """Create incidence heatmap.
     """
     fig, ax = plt.subplots()
@@ -310,8 +326,8 @@ def annotate_heatmap(
     valfmt="{x:.2f}",
     textcolors=["black", "white"],
     threshold=None,
-    **textkw
-):
+    **textkw,
+    ):
     """
     A function to annotate a heatmap.
 
@@ -365,16 +381,6 @@ def annotate_heatmap(
             texts.append(text)
 
     return texts
-
-
-def plot_scan_counts(scan_counts):
-    unique_types = np.array(list(scan_counts['scores_for_types'].keys()))
-    unique_scores = np.unique(np.array(scan_counts['scores_for_all']))
-    bin_edges = np.append(unique_scores, 2 * max(unique_scores))
-    counts = pd.DataFrame(0, index=sorted(unique_types), columns=sorted(unique_scores))
-    for unique_type in unique_types:
-        counts.loc[unique_type, :] = np.log10(np.histogram(np.array(scan_counts['scores_for_types'][unique_type]), bins=bin_edges)[0])
-    plot_incidence(counts, "Test")
 
 
 if __name__ == "__main__":
