@@ -5,8 +5,7 @@ import numpy as np
 from pathlib import Path
 import re
 
-# TARGET_DIR = Path("/home/ubuntu/target")
-TARGET_DIR = Path("/Users/raymondleclair/target-2021-06-17")
+TARGET_DIR = Path("/home/ubuntu/target")
 
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
 SCAN_RESULTS_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".json").name
@@ -76,14 +75,17 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
                         # Find ports, if specified
                         s_htons = p_htons.findall(line)
                         if len(s_inet_addr) == len(s_htons) or len(s_htons) == 0:
-                            # Found nonzero and an equal number of addresses and ports, or only addresses, as for recvmsg()
+                            # Found nonzero and an equal number of
+                            # addresses and ports, or only addresses,
+                            # as for recvmsg()
                             inet_addr = {}
                             inet_addr["line"] = line
                             inet_addr["addr"] = s_inet_addr
                             inet_addr["port"] = s_htons
                             strace_result["inet_addrs"].append(inet_addr)
                         else:
-                            # Found nonzero but an unequal number of addresses and ports, which is unexpected
+                            # Found nonzero but an unequal number of
+                            # addresses and ports, which is unexpected
                             logger.error(
                                 "Found {0} addresses and {1} ports, which is unexpected".format(
                                     len(s_inet_addr), len(s_htons)
@@ -166,7 +168,7 @@ def summarize_aura_scan_results(scan_results):
 
 if __name__ == "__main__":
 
-    scan_results = load_aura_scan_results()
-    strace_results = load_strace_results()
+    scan_results = load_aura_scan_results(force=True)
+    strace_results = load_strace_results(force=True)
 
-    summarize_aura_scan_results(scan_results)
+    # ummarize_aura_scan_results(scan_results)
