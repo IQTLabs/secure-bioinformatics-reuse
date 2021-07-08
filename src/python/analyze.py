@@ -119,7 +119,7 @@ def load_strace_results(target_dir=TARGET_DIR, force=False):
     return strace_results
 
 
-def load_aura_scan_results(force=False):
+def load_scan_results(force=False):
     """Deserialize Aura scan results and retain detections with a
     non-zero score. Collect the scan results and serialize to JSON for
     faster deserialization.
@@ -153,7 +153,78 @@ def load_aura_scan_results(force=False):
     return scan_results
 
 
-def summarize_aura_scan_results(scan_results):
+def count_strace_results(strace_results):
+    """Collect strace internet addresses and executed files by strace type ("conda install", "docker build", or "pipeline run").
+    """
+    strace_counts = {}
+
+    # Compile patterns for identifying scan type
+    p_conda_install = re.compile("-conda-install-")
+    p_docker_build = re.compile("-docker-build-")
+    p_pipeline_run = re.compile("-pipeline-run-")
+
+    # Consider each strace result
+    for strace_result in strace_results:
+
+        # Identify strace type
+        log_file = strace_result["log_file"]
+        if p_conda_install.search(log_file) is not None:
+            strace_type = "conda_install"
+            logger.debug("Log file {0} is strace of conda install".format(log_file))
+        elif p_docker_build.search(log_file) is not None:
+            strace_type = "docker_build"
+            logger.debug("Log file {0} is strace of docker build".format(log_file))
+        elif p_pipeline_run.search(log_file) is not None:
+            strace_type = "pipeline_run"
+            logger.debug("Log file {0} is strace of pipeline run".format(log_file))
+        else:
+            raise Exception("Unexpected log file: {0}".format(log_file))
+
+        # Initialize collected results
+        if strace_type not in strace_counts:
+            strace_counts[strace_type] = {}
+        if "addrs" not in strace_counts[strace_type]:
+            strace_counts[strace_type]["addrs"] = {}
+        if "files" not in strace_counts[strace_type]:
+            strace_counts[strace_type]["files"] = {}
+
+        # Collect internet addresses
+        for inet_addr in strace_result["inet_addrs"]:
+            for addr in inet_addr["addrs"]:
+                if addr not in strace_counts[strace_type]["addrs"]:
+                    strace_counts[strace_type]["addrs"][addr] = 0
+                strace_counts[strace_type]["addrs"][addr] += 1
+
+        # Collect executed files
+        for exec_file in strace_result["exec_files"]:
+            file = exec_file["file"]
+            if file not in strace_counts[strace_type]["files"]:
+                strace_counts[strace_type]["files"][file] = 0
+            strace_counts[strace_type]["files"][file] += 1
+
+    return strace_counts
+
+
+def count_scan_results(scan_results):
+    """Collect Aura scan scores for all detections, and for each detection by type.
+    """
+    scan_counts = {}
+    scan_counts["scores_for_all"] = []
+    scan_counts["scores_for_types"] = {}
+    for scan_result in scan_results:
+        for detection in scan_result["detections"]:
+            score = detection["score"]
+            type = detection["type"]
+            scan_counts["scores_for_all"].append(score)
+            if type not in scan_counts["scores_for_types"]:
+                scan_counts["scores_for_types"][type] = []
+            scan_counts["scores_for_types"][type].append(score)
+    return scan_counts
+
+
+def summarize_scan_results(scan_results):
+    """Write aura scan results to a file for review.
+    """
     with SCAN_SUMMARY_FILE.open("w") as fp:
         fp.write("score,detection type,severity,location,line number\n")
         for scan_result in scan_results:
@@ -174,67 +245,26 @@ def summarize_aura_scan_results(scan_results):
                 fp.write(f"{score},{det_type},{severity},{location},{line_no}\n")
 
 
-def count_aura_scan_results(scan_results):
-    scan_counts = {}
-    scan_counts["scores_for_all"] = []
-    scan_counts["scores_for_types"] = {}
-    for scan_result in scan_results:
-        for detection in scan_result["detections"]:
-            score = detection["score"]
-            type = detection["type"]
-            scan_counts["scores_for_all"].append(score)
-            if type not in scan_counts["scores_for_types"]:
-                scan_counts["scores_for_types"][type] = []
-            scan_counts["scores_for_types"][type].append(score)
-    return scan_counts
+def plot_strace_counts(strace_counts):
+    """Plot strace counts as a bar plot.
+    """
+    counts = pd.DataFrame.from_dict(
+        strace_counts["conda_install"]["addrs"], orient="index", columns=["counts"]
+    ).sort_values(by=["counts"])
 
+    n_rows = 20
 
-def count_strace_results(strace_results):
+    bar_plot_counts(counts.head(n_rows).loc[:, "counts"].values, "Test")
+    bar_plot_counts(counts.tail(n_rows).loc[:, "counts"].values, "Test")
 
-    strace_counts = {}
-
-    p_conda_install = re.compile("-conda-install-")
-    p_docker_build = re.compile("-docker-build-")
-    p_pipeline_run = re.compile("-pipeline-run-")
-
-    for strace_result in strace_results:
-
-        log_file = strace_result["log_file"]
-        if p_conda_install.search(log_file) is not None:
-            strace_type = "conda_install"
-            logger.debug("Log file {0} is strace of conda install".format(log_file))
-        elif p_docker_build.search(log_file) is not None:
-            strace_type = "docker_build"
-            logger.debug("Log file {0} is strace of docker build".format(log_file))
-        elif p_pipeline_run.search(log_file) is not None:
-            strace_type = "pipeline_run"
-            logger.debug("Log file {0} is strace of pipeline run".format(log_file))
-        else:
-            raise Exception("Unexpected log file: {0}".format(log_file))
-
-        if strace_type not in strace_counts:
-            strace_counts[strace_type] = {}
-        if "addrs" not in strace_counts[strace_type]:
-            strace_counts[strace_type]["addrs"] = {}
-        if "files" not in strace_counts[strace_type]:
-            strace_counts[strace_type]["files"] = {}
-
-        for inet_addr in strace_result["inet_addrs"]:
-            for addr in inet_addr["addrs"]:
-                if addr not in strace_counts[strace_type]["addrs"]:
-                    strace_counts[strace_type]["addrs"][addr] = 0
-                strace_counts[strace_type]["addrs"][addr] += 1
-
-        for exec_file in strace_result["exec_files"]:
-            file = exec_file["file"]
-            if file not in strace_counts[strace_type]["files"]:
-                strace_counts[strace_type]["files"][file] = 0
-            strace_counts[strace_type]["files"][file] += 1
-
-    return strace_counts
+    # img_plot_counts(counts.head(15), "Test")
+    # img_plot_counts(counts.tail(15), "Test")
+    return counts
 
 
 def plot_scan_counts(scan_counts):
+    """Plot scan counts as a heatmap.
+    """
     unique_types = np.array(list(scan_counts["scores_for_types"].keys()))
     unique_scores = np.unique(np.array(scan_counts["scores_for_all"]))
     bin_edges = np.append(unique_scores, 2 * max(unique_scores))
@@ -245,12 +275,25 @@ def plot_scan_counts(scan_counts):
                 np.array(scan_counts["scores_for_types"][unique_type]), bins=bin_edges
             )[0]
         )
-    plot_counts(counts, "Test")
+    img_plot_counts(counts, "Test")
 
 
-def plot_counts(data, title):
-    """Create incidence heatmap.
+def bar_plot_counts(height, title):
+    """Create counts bar plot.
     """
+    # TODO: Tidy up plot
+    x = np.arange(len(height))
+    fig, ax = plt.subplots()
+    ax.bar(x, height)
+    plt.tight_layout()
+    plt.savefig(title.replace(" ", "-") + ".png")
+    plt.show()
+
+
+def img_plot_counts(data, title):
+    """Create counts heatmap.
+    """
+    # TODO: Tidy up plot
     fig, ax = plt.subplots()
     im, cbar = heatmap(
         # data.transpose().iloc[::-1, ::-1],
@@ -258,10 +301,11 @@ def plot_counts(data, title):
         ax=ax,
         cmap="BuPu",
         cbarlabel="Within Year Relative Incidence",
+        # aspect="auto",
     )
     # texts = annotate_heatmap(im, valfmt="{x:.1f} t")
     # ax.set_title(title)
-    fig.tight_layout()
+    plt.tight_layout()
     plt.savefig(title.replace(" ", "-") + ".png")
     plt.show()
 
@@ -284,7 +328,6 @@ def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
     **kwargs
         All other arguments are forwarded to `imshow`.
     """
-
     if not ax:
         ax = plt.gca()
 
@@ -310,7 +353,8 @@ def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
 
     # Turn spines off and create white grid.
     for edge, spine in ax.spines.items():
-        spine.set_visible(False)
+        # spine.set_visible(False)
+        spine.set_color("w")
 
     ax.set_xticks(np.arange(data.shape[1] + 1) - 0.5, minor=True)
     ax.set_yticks(np.arange(data.shape[0] + 1) - 0.5, minor=True)
@@ -327,7 +371,7 @@ def annotate_heatmap(
     textcolors=["black", "white"],
     threshold=None,
     **textkw,
-    ):
+):
     """
     A function to annotate a heatmap.
 
@@ -352,7 +396,6 @@ def annotate_heatmap(
         All other arguments are forwarded to each call to `text` used to create
         the text labels.
     """
-
     if not isinstance(data, (list, np.ndarray)):
         data = im.get_array()
 
@@ -385,10 +428,11 @@ def annotate_heatmap(
 
 if __name__ == "__main__":
 
-    scan_results = load_aura_scan_results()
-    scan_counts = count_aura_scan_results(scan_results)
-    # summarize_aura_scan_results(scan_results)
-    plot_scan_counts(scan_counts)
-
     strace_results = load_strace_results()
     strace_counts = count_strace_results(strace_results)
+    counts = plot_strace_counts(strace_counts)
+
+    scan_results = load_scan_results()
+    scan_counts = count_scan_results(scan_results)
+    plot_scan_counts(scan_counts)
+    summarize_scan_results(scan_results)
