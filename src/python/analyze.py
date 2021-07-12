@@ -154,7 +154,8 @@ def load_scan_results(force=False):
 
 
 def count_strace_results(strace_results):
-    """Collect strace internet addresses and executed files by strace type ("conda install", "docker build", or "pipeline run").
+    """Collect strace internet addresses and executed files by strace
+    type ("conda install", "docker build", or "pipeline run").
     """
     strace_counts = {}
 
@@ -206,7 +207,8 @@ def count_strace_results(strace_results):
 
 
 def count_scan_results(scan_results):
-    """Collect Aura scan scores for all detections, and for each detection by type.
+    """Collect Aura scan scores for all detections, and for each
+    detection by type.
     """
     scan_counts = {}
     scan_counts["scores_for_all"] = []
@@ -219,6 +221,7 @@ def count_scan_results(scan_results):
             if type not in scan_counts["scores_for_types"]:
                 scan_counts["scores_for_types"][type] = []
             scan_counts["scores_for_types"][type].append(score)
+
     return scan_counts
 
 
@@ -251,14 +254,17 @@ def plot_strace_counts(strace_counts):
     counts = pd.DataFrame.from_dict(
         strace_counts["conda_install"]["addrs"], orient="index", columns=["counts"]
     ).sort_values(by=["counts"])
-
     n_rows = 20
-
-    bar_plot_counts(counts.head(n_rows).loc[:, "counts"].values, "Test")
-    bar_plot_counts(counts.tail(n_rows).loc[:, "counts"].values, "Test")
-
-    # img_plot_counts(counts.head(15), "Test")
-    # img_plot_counts(counts.tail(15), "Test")
+    bar_plot_counts(
+        counts.head(n_rows).loc[:, "counts"].values,
+        counts.head(n_rows).index,
+        "Least frequently occuring IP addresses",
+    )
+    bar_plot_counts(
+        counts.tail(n_rows).loc[:, "counts"].values,
+        counts.tail(n_rows).index,
+        "Most frequently occuring IP addresses",
+    )
     return counts
 
 
@@ -275,44 +281,56 @@ def plot_scan_counts(scan_counts):
                 np.array(scan_counts["scores_for_types"][unique_type]), bins=bin_edges
             )[0]
         )
-    img_plot_counts(counts, "Test")
+    img_plot_counts(counts, title="Detection Scores", cbarlabel="$log_{10}(Counts)$")
+
+    return counts
 
 
-def bar_plot_counts(height, title):
+def bar_plot_counts(height, xticklabels, title=""):
     """Create counts bar plot.
     """
-    # TODO: Tidy up plot
     x = np.arange(len(height))
     fig, ax = plt.subplots()
     ax.bar(x, height)
+    ax.set_xticks(np.arange(len(x)))
+    ax.set_xticklabels(xticklabels, rotation=-90)
+    ax.set_ylabel("Count")
+    ax.set_title(title)
     plt.tight_layout()
     plt.savefig(title.replace(" ", "-") + ".png")
     plt.show()
 
+    return fig, ax
 
-def img_plot_counts(data, title):
+
+def img_plot_counts(data, title="", cbarlabel=""):
     """Create counts heatmap.
     """
-    # TODO: Tidy up plot
     fig, ax = plt.subplots()
     im, cbar = heatmap(
         # data.transpose().iloc[::-1, ::-1],
         data,
         ax=ax,
         cmap="BuPu",
-        cbarlabel="Within Year Relative Incidence",
+        cbarlabel=cbarlabel,
         # aspect="auto",
     )
     # texts = annotate_heatmap(im, valfmt="{x:.1f} t")
-    # ax.set_title(title)
+    if len(title) > 0:
+        ax.set_title(title)
+    ax.set_xlabel("Score")
+    pos_im = ax.get_position()
+    pos_cb = cbar.ax.get_position()
+    fig.set_figwidth(fig.get_figwidth() * (pos_cb.xmax - pos_im.xmin + 0.33))
     plt.tight_layout()
     plt.savefig(title.replace(" ", "-") + ".png")
     plt.show()
 
+    return fig, ax, im, cbar
+
 
 def heatmap(data, ax=None, cbar_kw={}, cbarlabel="", **kwargs):
-    """
-    Create a heatmap from a numpy array and two lists of labels.
+    """Create a heatmap from a numpy array and two lists of labels.
 
     Parameters
     ----------
@@ -372,8 +390,7 @@ def annotate_heatmap(
     threshold=None,
     **textkw,
 ):
-    """
-    A function to annotate a heatmap.
+    """A function to annotate a heatmap.
 
     Parameters
     ----------
