@@ -2,6 +2,7 @@ from glob import glob
 import json
 import logging
 from pathlib import Path
+from pprint import pprint
 import re
 
 from matplotlib import pyplot as plt
@@ -13,12 +14,23 @@ import pandas as pd
 TARGET_DIR = Path("/Users/raymondleclair/target-2021-07-07")
 
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
-SCAN_RESULTS_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".json").name
-SCAN_SUMMARY_FILE = TARGET_DIR / SCAN_RESULTS_DIR.with_suffix(".csv").name
+SCAN_RESULTS_FILE = TARGET_DIR / Path(SCAN_RESULTS_DIR.name + "-results").with_suffix(
+    ".json"
+)
+SCAN_COUNTS_FILE = TARGET_DIR / Path(SCAN_RESULTS_DIR.name + "-counts").with_suffix(
+    ".json"
+)
+SCAN_SUMMARY_FILE = TARGET_DIR / Path(SCAN_RESULTS_DIR.name + "-summary").with_suffix(
+    ".csv"
+)
 
 STRACE_RESULTS_DIR = TARGET_DIR
-STRACE_RESULTS_FILE = TARGET_DIR / STRACE_RESULTS_DIR.with_suffix(".json").name
-STRACE_SUMMARY_FILE = TARGET_DIR / STRACE_RESULTS_DIR.with_suffix(".csv").name
+STRACE_RESULTS_FILE = TARGET_DIR / Path(
+    STRACE_RESULTS_DIR.name + "-results"
+).with_suffix(".json")
+STRACE_COUNTS_FILE = TARGET_DIR / Path(STRACE_RESULTS_DIR.name + "-counts").with_suffix(
+    ".json"
+)
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -203,6 +215,9 @@ def count_strace_results(strace_results):
                 strace_counts[strace_type]["files"][file] = 0
             strace_counts[strace_type]["files"][file] += 1
 
+    with open(STRACE_COUNTS_FILE, "w") as fp:
+        pprint(strace_counts, stream=fp)
+
     return strace_counts
 
 
@@ -221,6 +236,9 @@ def count_scan_results(scan_results):
             if type not in scan_counts["scores_for_types"]:
                 scan_counts["scores_for_types"][type] = []
             scan_counts["scores_for_types"][type].append(score)
+
+    with open(SCAN_COUNTS_FILE, "w") as fp:
+        pprint(strace_counts, stream=fp)
 
     return scan_counts
 
@@ -447,7 +465,7 @@ if __name__ == "__main__":
 
     strace_results = load_strace_results()
     strace_counts = count_strace_results(strace_results)
-    counts = plot_strace_counts(strace_counts)
+    plot_strace_counts(strace_counts)
 
     scan_results = load_scan_results()
     scan_counts = count_scan_results(scan_results)
