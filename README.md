@@ -6,7 +6,10 @@ Code Reuse Project focusing on, well, bioinformatics.
 ## Goal
 
 The goal of the subproject is to assess security vulnerabilities in
-open source bioinformatics software packages.
+open source bioinformatics software packages. We hope that those
+concerned with the security of open source bioinformatics code
+will be able to use or build on these approaches to help protect
+those who use or depend on the open source bioinformatics ecosystem.
 
 ## Approach
 
