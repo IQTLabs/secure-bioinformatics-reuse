@@ -145,23 +145,24 @@ def load_aura_scan_results(force=False):
 
 def summarize_aura_scan_results(scan_results):
     with SCAN_SUMMARY_FILE.open("w") as fp:
-        fp.write("score,detection type,severity,location,line number\n")
+        fp.write("result score,detection score,detection type,severity,location,line number\n")
         for scan_result in scan_results:
+            result_score = scan_result["score"]
             detections = scan_result["detections"]
-            scores = np.array(scan_result["scores"])
-            if len(scores) == 0:
+            detection_scores = np.array(scan_result["scores"])
+            if len(detection_scores) == 0:
                 continue
-            for i_det in np.nonzero(scores == max(scores))[0]:
+            for i_det in np.nonzero(detection_scores == max(detection_scores))[0]:
                 detection = detections[i_det]
-                score = detection["score"]
-                det_type = detection["type"]
-                severity = detection["severity"]
+                detection_score = detection["score"]
+                detection_type = detection["type"]
+                detection_severity = detection["severity"]
                 if "line_no" in detection:
-                    line_no = detection["line_no"]
+                    detection_line_no = detection["line_no"]
                 else:
-                    line_no = "NA"
-                location = detection["location"].replace("/home/", "")
-                fp.write(f"{score},{det_type},{severity},{location},{line_no}\n")
+                    detection_line_no = "NA"
+                detection_location = detection["location"].replace("/home/", "")
+                fp.write(f"{result_score},{detection_score},{detection_type},{detection_severity},{detection_location},{detection_line_no}\n")
 
 
 if __name__ == "__main__":
