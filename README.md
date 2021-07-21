@@ -141,6 +141,20 @@ See: https://www.digitalocean.com/community/tutorials/how-to-install-python-3-an
     sudo apt-get install python3-venv
     pip install -r requirements.txt
 
+## Greynoise
+
+GreyNoise tells security analysts what not to worry about. They
+collect, analyze and label data on IPs that saturate security tools
+with noise. This unique perspective helps analysts confidently ignore
+irrelevant or harmless activity, creating more time to uncover and
+investigate true threats.
+
+See: https://www.greynoise.io/,
+https://developer.greynoise.io/reference/community-api, and
+https://developer.greynoise.io/docs/libraries-sample-code
+
+    greynoise setup -k UserAPIKey
+
 ## AWS
 
 Amazon Web Services (AWS) is a subsidiary of Amazon providing

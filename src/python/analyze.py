@@ -1,17 +1,21 @@
+import configparser
 from glob import glob
 import json
 import logging
+from os.path import expanduser
 from pathlib import Path
 from pprint import pprint
 import re
+import requests
 
 from matplotlib import pyplot as plt
 from matplotlib import ticker
 import numpy as np
 import pandas as pd
 
-# TARGET_DIR = Path("/home/ubuntu/target")
-TARGET_DIR = Path("/Users/raymondleclair/target-2021-07-07")
+HOME = expanduser("~")
+
+TARGET_DIR = Path(HOME + "/target-2021-07-07")
 
 SCAN_RESULTS_DIR = TARGET_DIR / "scan"
 SCAN_RESULTS_FILE = TARGET_DIR / Path(SCAN_RESULTS_DIR.name + "-results").with_suffix(
@@ -31,6 +35,14 @@ STRACE_RESULTS_FILE = TARGET_DIR / Path(
 STRACE_COUNTS_FILE = TARGET_DIR / Path(STRACE_RESULTS_DIR.name + "-counts").with_suffix(
     ".json"
 )
+STRACE_IP_LOOKUPS_FILE = TARGET_DIR / Path(
+    STRACE_RESULTS_DIR.name + "-ip-lookups"
+).with_suffix(".json")
+
+config = configparser.ConfigParser()
+config.read(HOME + "/.config/greynoise/config")
+GREYNOISE_API_KEY = config["greynoise"]["api_key"]
+GREYNOISE_API_SERVER = config["greynoise"]["api_server"]
 
 root = logging.getLogger()
 root.setLevel(logging.INFO)
@@ -238,7 +250,7 @@ def count_scan_results(scan_results):
             scan_counts["scores_for_types"][type].append(score)
 
     with open(SCAN_COUNTS_FILE, "w") as fp:
-        pprint(strace_counts, stream=fp)
+        pprint(scan_counts, stream=fp)
 
     return scan_counts
 
@@ -247,7 +259,9 @@ def summarize_scan_results(scan_results):
     """Write aura scan results to a file for review.
     """
     with SCAN_SUMMARY_FILE.open("w") as fp:
-        fp.write("result score,detection score,detection type,severity,location,line number\n")
+        fp.write(
+            "result score,detection score,detection type,severity,location,line number\n"
+        )
         for scan_result in scan_results:
             result_score = scan_result["score"]
             detections = scan_result["detections"]
@@ -264,7 +278,44 @@ def summarize_scan_results(scan_results):
                 else:
                     detection_line_no = "NA"
                 detection_location = detection["location"].replace("/home/", "")
-                fp.write(f"{result_score},{detection_score},{detection_type},{detection_severity},{detection_location},{detection_line_no}\n")
+                fp.write(
+                    f"{result_score},{detection_score},{detection_type},{detection_severity},{detection_location},{detection_line_no}\n"
+                )
+
+
+def lookup_ip_strace_counts(strace_counts, force=False):
+    """Deserialize GreyNoise IP lookup results. Collect IP lookup
+    results and serialize to JSON for faster deserialization, and to
+    limit API usage.
+    """
+    strace_ip_lookups = {}
+    if STRACE_IP_LOOKUPS_FILE.exists() and not force:
+        logger.info(
+            "Loading strace IP lookups file: {0}".format(STRACE_IP_LOOKUPS_FILE)
+        )
+        with STRACE_IP_LOOKUPS_FILE.open("r") as fp:
+            strace_ip_lookups = json.load(fp)
+    # Collect the IP lookup results
+    headers = {
+        "Accept": "application/json",
+        "key": GREYNOISE_API_KEY,
+    }
+    for ip_addr in strace_counts["conda_install"]["addrs"].keys():
+        if ip_addr in strace_ip_lookups:
+            continue
+        url = f"{GREYNOISE_API_SERVER}/v2/noise/quick/{ip_addr}"
+        response = requests.request("GET", url, headers=headers)
+        result = json.loads(response.text)
+        strace_ip_lookups[ip_addr] = result["code"]
+        logger.info(
+            "Dumping strace IP lookups file: {0} for IP: {1}".format(
+                STRACE_IP_LOOKUPS_FILE, ip_addr
+            )
+        )
+        with STRACE_IP_LOOKUPS_FILE.open("w") as fp:
+            json.dump(strace_ip_lookups, fp, indent=4)
+
+    return strace_ip_lookups
 
 
 def plot_strace_counts(strace_counts):
@@ -466,6 +517,7 @@ if __name__ == "__main__":
 
     strace_results = load_strace_results()
     strace_counts = count_strace_results(strace_results)
+    strace_ip_lookups = lookup_ip_strace_counts(strace_counts)
     plot_strace_counts(strace_counts)
 
     scan_results = load_scan_results()
