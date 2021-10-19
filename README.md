@@ -57,7 +57,7 @@ Python (and associated requirements), and the AWS command line
 interface (for configuration). Dask, an open source library for
 parallel computing written in Python, is used to distribute processing
 over a cluster. As a result, after creating an instance with all
-requirements installed, and Amazon Machine Image is created and used
+requirements installed, an Amazon Machine Image is created and used
 for launching images on the cluster. The following sections describe
 installation details.
 
