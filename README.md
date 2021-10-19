@@ -1,7 +1,7 @@
 # Project Background
 
-The Secure Bioinformatics Reuse effort is a subproject of the Secure
-Code Reuse Project focusing on, well, bioinformatics.
+The Secure Bioinformatics Reuse effort is a subproject of the [Secure
+Code Reuse Project](https://www.iqt.org/toward-secure-code-reuse/) focusing on, well, bioinformatics.
 
 ## Goal
 
